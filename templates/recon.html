@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>銷帳檔對帳</title>
+<style>
+:root{--bd:#e5e7eb;--mut:#6b7280;--bg:#f9fafb;--ok:#059669;--warn:#d97706;--bad:#dc2626}
+*{box-sizing:border-box}
+body{font-family:-apple-system,"Noto Sans TC","PingFang TC",sans-serif;
+     margin:0;padding:24px;background:var(--bg);color:#111827;line-height:1.6}
+.wrap{max-width:1120px;margin:0 auto}
+h1{font-size:20px;margin:0 0 20px}
+h2{font-size:15px;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--bd)}
+.card{background:#fff;border:1px solid var(--bd);border-radius:10px;padding:18px;margin-bottom:18px}
+form{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:4px}
+input[type=date],input[type=file]{padding:7px 9px;border:1px solid var(--bd);border-radius:7px;font-size:14px}
+button,.btn{background:#111827;color:#fff;border:0;border-radius:7px;padding:9px 18px;
+     font-size:14px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.sec{background:#fff;color:#111827;border:1px solid var(--bd)}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi div{background:var(--bg);border-radius:8px;padding:12px}
+.kpi small{display:block;color:var(--mut);font-size:12px}
+.kpi b{font-size:19px;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 9px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top}
+th{background:var(--bg);font-weight:600;white-space:nowrap}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:12px;border-radius:8px}
+.empty{color:var(--mut);font-size:13px}
+</style>
+</head>
+<body><div class="wrap">
+<h1>💳 銷帳檔對帳</h1>
+
+{% if need_login %}
+  <div class="card err">請先登入管理後台。</div>
+{% else %}
+
+<div class="card">
+  <form method="post" enctype="multipart/form-data">
+    <div><label>付款日起</label><input type="date" name="start" value="{{ start }}" required></div>
+    <div><label>付款日迄</label><input type="date" name="end" value="{{ end }}" required></div>
+    <div><label>銷帳檔（.txt）</label><input type="file" name="file" accept=".txt" required></div>
+    <button type="submit">開始對帳</button>
+    {% if res %}<a class="btn sec" href="{{ url_for('recon.export') }}">下載 Excel</a>{% endif %}
+  </form>
+</div>
+
+{% if error %}<div class="card err">{{ error }}</div>{% endif %}
+{% if diag %}
+<div class="card" style="border-left:4px solid #e67e22;background:#fdf6ec;">
+  <b>🔎 對帳診斷</b>
+  <ul style="margin:8px 0 0 18px;line-height:1.8;">
+    <li>撈到帳單：<b>{{ diag['撈到帳單'] }}</b> 筆　｜　銀行入帳：<b>{{ diag['銀行入帳筆數'] }}</b> 筆</li>
+    <li>已出貨帳單總數：<b>{{ diag['已出貨總數'] }}</b>　｜　有填末五碼：<b>{{ diag['有填末五碼'] }}</b></li>
+    <li>區間內帳單：<b>{{ diag['區間內(出貨或付款日)'] }}</b>　｜　其中末五碼是「純5碼數字」：<b>{{ diag['區間內_末五碼是純5碼數字'] }}</b></li>
+    <li>帳單末五碼實際樣態取樣：<b>{{ diag['末五碼取樣'] | join('、') if diag['末五碼取樣'] else '（無）' }}</b></li>
+  </ul>
+  <div style="margin-top:8px;color:#8a6d3b;font-size:13px;line-height:1.7;">
+    ・「撈到帳單 0」＝這區間沒有可對的帳單，多半是客戶沒在系統回報末五碼，或日期沒涵蓋（放寬區間再試）。<br>
+    ・末五碼取樣若出現「管確認 / 現金 / 後付」等文字而非 5 位數字，代表那些帳單沒有可比對的末五碼，自然對不上銀行入帳。<br>
+    ・「純5碼數字」的筆數，才是真正能跟銀行自動比對的帳單數。
+  </div>
+</div>
+{% endif %}
+
+{% if res %}
+{% set s = res.summary() %}
+<div class="card">
+  <div class="kpi">
+    <div><small>帳單</small><b>{{ s['帳單筆數'] }} 筆</b></div>
+    <div><small>帳單總額</small><b>NT${{ '{:,}'.format(s['帳單總額']) }}</b></div>
+    <div><small>應匯款</small><b>NT${{ '{:,}'.format(s['應匯款金額']) }}</b></div>
+    <div><small>已收</small><b class="ok">NT${{ '{:,}'.format(s['已收金額']) }}</b></div>
+    <div><small>差額</small><b class="{{ 'bad' if s['差額'] else 'ok' }}">NT${{ '{:,}'.format(s['差額']) }}</b></div>
+    <div><small>相符群組</small><b>{{ s['相符群組'] }}</b></div>
+  </div>
+</div>
+
+<h2>⚠️ 末五碼登錄錯誤（款項已收，請更正）</h2>
+<div class="card">
+{% if res.wrong_last5 %}
+<table><tr><th>客戶</th><th>金額</th><th>帳單末五碼</th><th>實際末五碼</th><th>入帳日</th><th>匯款人</th><th>判定</th></tr>
+{% for w in res.wrong_last5 %}<tr>
+<td>{{ w.customer }}</td><td class="num">{{ '{:,}'.format(w.amount) }}</td>
+<td class="bad">{{ w.bill_last5 }}</td><td class="ok">{{ w.bank_last5 }}</td>
+<td>{{ w.bank_date }}</td><td>{{ w.payer_name }}</td><td class="warn">{{ w.reason }}</td>
+</tr>{% endfor %}</table>
+{% else %}<p class="empty">無</p>{% endif %}
+</div>
+
+<h2>🔻 短收 / 🔺 溢收</h2>
+<div class="card">
+{% if res.short_paid or res.over_paid %}
+<table><tr><th>末五碼</th><th>客戶</th><th>應收</th><th>實收</th><th>差額</th></tr>
+{% for g in res.short_paid + res.over_paid %}<tr>
+<td>{{ g.last5 }}</td><td>{{ g.customers|join('、') }}</td>
+<td class="num">{{ '{:,}'.format(g.bill_amount) }}</td>
+<td class="num">{{ '{:,}'.format(g.bank_amount) }}</td>
+<td class="num {{ 'bad' if g.diff < 0 else 'warn' }}">{{ '{:+,}'.format(g.diff) }}</td>
+</tr>{% endfor %}</table>
+{% else %}<p class="empty">無</p>{% endif %}
+</div>
+
+<h2>❌ 查無入帳</h2>
+<div class="card">
+{% if res.missing %}
+<table><tr><th>客戶</th><th>金額</th><th>末五碼</th><th>出貨日</th><th>銷帳註記日</th></tr>
+{% for m in res.missing %}<tr>
+<td>{{ m.customer }}</td><td class="num bad">{{ '{:,}'.format(m.amount) }}</td>
+<td>{{ m.last5 }}</td><td>{{ m.ship_date }}</td><td>{{ m.paid_at }}</td>
+</tr>{% endfor %}</table>
+{% else %}<p class="empty">無</p>{% endif %}
+</div>
+
+<h2>📥 銀行有、帳單無</h2>
+<div class="card">
+{% if res.unmatched_bank %}
+<table><tr><th>日期</th><th>金額</th><th>分類</th><th>末五碼</th><th>匯款人</th><th>摘要</th></tr>
+{% for u in res.unmatched_bank %}<tr>
+<td>{{ u.date }}</td><td class="num">{{ '{:,}'.format(u.amount) }}</td>
+<td>{{ u.category }}</td><td>{{ u.last5 or '-' }}</td>
+<td>{{ u.payer_name }}</td><td>{{ u.memo }}</td>
+</tr>{% endfor %}</table>
+{% else %}<p class="empty">無</p>{% endif %}
+</div>
+{% endif %}
+{% endif %}
+</div></body></html>

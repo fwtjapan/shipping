@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.db-wal
+*.db-shm
+shopify_cache.json
+.env
+*_diff.txt
+_recon/
+*.csv
+backups/

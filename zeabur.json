@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schema.zeabur.app/template.json",
+  "build": {
+    "builder": "python"
+  },
+  "start": {
+    "command": "gunicorn app:app --bind 0.0.0.0:8080"
+  }
+}

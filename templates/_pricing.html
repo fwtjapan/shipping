@@ -1,0 +1,74 @@
+{# FWT JAPAN 收費說明（公開區與登入後共用）。數字來自 brand.py #}
+{% set r = brand.rate_twd %}
+{% if show_banner %}
+                <div style="text-align:center;padding:28px 24px;background:linear-gradient(135deg,rgba(243,156,18,0.12),rgba(231,76,60,0.08));border:1px solid rgba(243,156,18,0.3);border-radius:16px;margin-bottom:24px;">
+                    <div id="banner-brand-name" style="font-size:15px;color:#888;margin-bottom:10px;letter-spacing:1px;">{{ brand.name }} 集運</div>
+                    <div style="font-size:42px;font-weight:700;background:linear-gradient(135deg,#f39c12,#e74c3c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;margin-bottom:6px;">
+                        每公斤 NT${{ r }}
+                    </div>
+                    <div style="font-size:14px;color:#aaa;margin-bottom:14px;">約日幣 {{ "{:,}".format(brand.rate_jpy) }} 円</div>
+                    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;">
+                        <span style="padding:6px 14px;background:rgba(39,174,96,0.15);border:1px solid rgba(39,174,96,0.3);border-radius:20px;font-size:13px;color:#2ecc71;">✓ 只算重量・不算材積</span>
+                        <span style="padding:6px 14px;background:rgba(39,174,96,0.15);border:1px solid rgba(39,174,96,0.3);border-radius:20px;font-size:13px;color:#2ecc71;">✓ 倉儲 {{ brand.free_storage_days }} 天免費</span>
+                        <span style="padding:6px 14px;background:rgba(52,152,219,0.15);border:1px solid rgba(52,152,219,0.3);border-radius:20px;font-size:13px;color:#5dade2;">✓ 每月 {{ brand.tier_kg }}kg 以上分層談價</span>
+                    </div>
+                </div>
+{% endif %}
+
+                <div class="card info-section">
+                    <div class="info-section-title">⚖️ 運費計算</div>
+                    <div class="info-card">
+                        <h4>📏 計費規則</h4>
+                        <ul>
+                            <li>運費 <strong style="color:#f39c12;">每公斤 NT${{ r }}</strong>，<strong>只算實際重量，不算材積</strong></li>
+                            <li>最低計費 <strong>2 kg</strong>，超過 2 kg 以 <strong>0.5 kg</strong> 為單位進位</li>
+                            <li>每月出貨 <strong>{{ brand.tier_kg }} kg 以上</strong>可分層談價，請聯繫客服{% if brand.line_id %}（LINE：{{ brand.line_id }}）{% endif %}</li>
+                            <li>長＋寬＋高超過 200cm 的超大貨物，請先聯繫客服確認</li>
+                        </ul>
+                        <div class="info-note" style="margin-top:10px;">
+                            💡 例：0.8 kg → 計費 <strong>2.0 kg</strong>　／　2.2 kg → 計費 <strong>2.5 kg</strong>　／　5.0 kg → 計費 <strong>5.0 kg</strong>
+                        </div>
+                    </div>
+                    <div class="info-card vol-calc">
+                        <h4>🧮 運費試算</h4>
+                        <div style="display:grid;grid-template-columns:1fr;gap:8px;max-width:240px;">
+                            <div><label style="font-size:12px;color:#888;">實際重量(kg)</label><input type="number" class="form-control vol-wt" min="0" step="0.1" oninput="calcVolumetric(this)"></div>
+                        </div>
+                        <div class="vol-result" style="margin-top:10px;font-size:13px;color:#888;">輸入實際重量即可試算運費</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="collapse-toggle" onclick="toggleCollapse(this)">
+                            <h4 style="margin-bottom:0;">📊 運費對照表</h4>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="collapse-body">
+                            <table class="pricing-table">
+                                <thead><tr><th>實際重量</th><th>計費重量</th><th style="text-align:right">運費（NT${{ r }}/kg）</th></tr></thead>
+                                <tbody>
+                                    <tr><td>0 ~ 2.0 kg</td><td>2.0 kg</td><td class="price-cell" style="text-align:right">NT${{ "{:,}".format(2 * r) }}</td></tr>
+{% for i in range(5, 21) %}{% set kg = i / 2 %}
+                                    <tr><td>{{ "%.1f"|format(kg - 0.4) }} ~ {{ "%.1f"|format(kg) }} kg</td><td>{{ "%.1f"|format(kg) }} kg</td><td class="price-cell" style="text-align:right">NT${{ "{:,}".format((kg * r)|round|int) }}</td></tr>
+{% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card info-section">
+                    <div class="info-section-title">🏢 倉儲</div>
+                    <div class="info-card">
+                        <p>包裹入庫日起 <strong style="color:#2ecc71;">{{ brand.free_storage_days }} 天內免費倉儲</strong>。超過 {{ brand.free_storage_days }} 天請先聯繫客服。</p>
+                    </div>
+                </div>
+
+                <div class="card info-section">
+                    <div class="info-section-title">⭐ 加值服務</div>
+                    <div class="info-card">
+                        <table class="pricing-table">
+                            <thead><tr><th style="width:35%">服務名稱</th><th style="width:50%">說明</th><th style="width:15%;text-align:right">價格</th></tr></thead>
+                            <tbody class="paid-services-body"><tr><td colspan="3" style="text-align:center;color:#888;padding:16px;">載入中…</td></tr></tbody>
+                        </table>
+                        <div class="info-note" style="margin-top:10px;">申請出貨時在「加值服務（選填）」勾選即可，費用於請款時一併計算。</div>
+                    </div>
+                </div>

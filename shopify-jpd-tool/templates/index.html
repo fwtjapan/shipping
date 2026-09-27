@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>御用達 × JPD 雲倉</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh; color: #fff;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; padding: 30px 0; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px; }
+        header h1 { font-size: 2rem; background: linear-gradient(90deg, #f39c12, #e74c3c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+        header p { color: #888; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab { padding: 12px 24px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .tab:hover { background: rgba(255,255,255,0.1); }
+        .tab.active { background: linear-gradient(90deg, #f39c12, #e74c3c); border-color: transparent; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .card h3 { margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(90deg, #f39c12, #e74c3c); color: #fff; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(243,156,18,0.3); }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; }
+        .btn-success { background: #27ae60; color: #fff; }
+        .btn-danger { background: #e74c3c; color: #fff; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        th { background: rgba(255,255,255,0.05); font-weight: 600; }
+        tr:hover { background: rgba(255,255,255,0.03); }
+        .status { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .status-unfulfilled { background: rgba(231,76,60,0.2); color: #e74c3c; }
+        .status-fulfilled { background: rgba(39,174,96,0.2); color: #27ae60; }
+        .status-processing { background: rgba(243,156,18,0.2); color: #f39c12; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: #1a1a2e; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #888; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #f39c12; }
+        .mode-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+        .mode-option { flex: 1; padding: 20px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.3s; }
+        .mode-option:hover { border-color: rgba(243,156,18,0.5); }
+        .mode-option.selected { border-color: #f39c12; background: rgba(243,156,18,0.1); }
+        .mode-option h4 { margin-bottom: 5px; }
+        .mode-option p { font-size: 12px; color: #888; }
+        .loading { text-align: center; padding: 40px; color: #888; }
+        .loading::after { content: ''; display: inline-block; width: 20px; height: 20px; border: 2px solid #f39c12; border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; margin-left: 10px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .toast { position: fixed; bottom: 30px; right: 30px; padding: 15px 25px; border-radius: 8px; color: #fff; font-weight: 500; z-index: 2000; animation: slideIn 0.3s ease; }
+        .toast-success { background: #27ae60; }
+        .toast-error { background: #e74c3c; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .items-list { max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 6px; padding: 10px; }
+        .item { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; }
+        .item:last-child { border-bottom: none; }
+        .refresh-btn { float: right; }
+        .order-actions { display: flex; gap: 5px; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: rgba(255,255,255,0.1); }
+        /* 出檔案專用 */
+        .export-toolbar { display: flex; gap: 12px; align-items: center; padding: 12px 16px; background: rgba(243,156,18,0.08); border: 1px solid rgba(243,156,18,0.3); border-radius: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .export-toolbar select { padding: 8px 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; border-radius: 6px; font-size: 13px; }
+        .export-stat { color: #f39c12; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏯 御用達 × JPD 雲倉</h1>
+            <p>Shopify 訂單管理 & 物流串接工具</p>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="orders">📦 Shopify 訂單</div>
+            <div class="tab" data-tab="exports">📤 出檔案</div>
+        </div>
+        
+        <!-- Shopify 訂單 -->
+        <div class="panel active" id="panel-orders">
+            <div class="card">
+                <h3>
+                    📦 待出貨訂單
+                    <button class="btn btn-secondary refresh-btn" onclick="loadShopifyOrders()">🔄 重新整理</button>
+                </h3>
+                <div style="margin-bottom:12px;">
+                    <input type="text" id="shopify-order-search" placeholder="🔍 搜尋訂單編號、收件人、地址、電話..." oninput="filterShopifyOrders()" style="width:100%;padding:10px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+                    <span id="shopify-order-count" style="font-size:12px;color:#888;margin-top:4px;display:inline-block;"></span>
+                </div>
+                <div id="shopify-orders-loading" class="loading">載入中</div>
+                <table id="shopify-orders-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>訂單編號</th>
+                            <th>收件人</th>
+                            <th>地址</th>
+                            <th>電話</th>
+                            <th>金額</th>
+                            <th>狀態</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shopify-orders-body"></tbody>
+                </table>
+                <div id="shopify-orders-pagination" style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:16px;flex-wrap:wrap;"></div>
+            </div>
+        </div>
+        
+        <!-- JPD 運單 -->
+        <div class="panel" id="panel-jpd">
+            <div class="card">
+                <h3>
+                    🚚 JPD 運單記錄
+                    <button class="btn btn-secondary refresh-btn" onclick="loadJpdOrders()">🔄 重新整理</button>
+                </h3>
+                <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+                    <label style="color:#888;font-size:13px;">日期：</label>
+                    <input type="date" id="jpd-date-from" onchange="filterJpdOrders()" style="padding:8px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+                    <span style="color:#666;">～</span>
+                    <input type="date" id="jpd-date-to" onchange="filterJpdOrders()" style="padding:8px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="jpdQuickDate(0)">今天</button>
+                        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="jpdQuickDate(7)">近 7 天</button>
+                        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="jpdQuickDate(30)">近 30 天</button>
+                        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="jpdQuickDate(90)">近 3 個月</button>
+                    </div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <input type="text" id="jpd-order-search" placeholder="🔍 搜尋運單號、客戶單號、收件人、電話..." oninput="filterJpdOrders()" style="width:100%;padding:10px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+                    <span id="jpd-order-count" style="font-size:12px;color:#888;margin-top:4px;display:inline-block;"></span>
+                </div>
+                <div id="jpd-orders-loading" class="loading">載入中</div>
+                <table id="jpd-orders-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>運單號</th>
+                            <th>客戶單號</th>
+                            <th>包裹 ID</th>
+                            <th>收件人</th>
+                            <th>電話</th>
+                            <th>地址</th>
+                            <th>建立日期</th>
+                            <th>狀態</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jpd-orders-body"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 倉庫包裹 -->
+        <div class="panel" id="panel-packages">
+            <div class="card">
+                <h3>
+                    📋 倉庫待出貨包裹
+                    <button class="btn btn-secondary refresh-btn" onclick="loadJpdPackages()">🔄 重新整理</button>
+                </h3>
+                <div style="margin-bottom:12px;">
+                    <input type="text" id="pkg-search" placeholder="🔍 搜尋包裹 ID、訂單號碼、收件人、電話..." oninput="filterJpdPackages()" style="width:100%;padding:10px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+                    <span id="pkg-search-count" style="font-size:12px;color:#888;margin-top:4px;display:inline-block;"></span>
+                </div>
+                <div id="jpd-packages-loading" class="loading">載入中</div>
+                <table id="jpd-packages-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>照片</th>
+                            <th>包裹 ID</th>
+                            <th>訂單號碼</th>
+                            <th>收件人</th>
+                            <th>電話</th>
+                            <th>重量</th>
+                            <th>尺寸 (cm)</th>
+                            <th>入庫日期</th>
+                            <th>狀態</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jpd-packages-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 📤 出檔案 -->
+        <div class="panel" id="panel-exports">
+            <div class="card" style="margin-bottom:14px;border:1px solid rgba(52,152,219,0.35);">
+                <h3 style="color:#3498db;">
+                    🚚 台灣配送貨況同步（回寫 Shopify）
+                    <span style="float:right;display:inline-flex;gap:8px;">
+                        <button class="btn btn-secondary refresh-btn" style="background:rgba(255,255,255,0.1);color:#ccc;" onclick="syncTwTracking(false)">🔕 靜默同步（不發信）</button>
+                        <button class="btn btn-secondary refresh-btn" style="background:#3498db;color:#fff;" onclick="syncTwTracking(true)">🔄 立即同步（發信）</button>
+                    </span>
+                </h3>
+                <p style="color:#888;font-size:13px;margin-bottom:8px;line-height:1.6;">
+                    從貨運行試算表抓黑貓/新竹派件單號，用 <strong>8 碼注文番號</strong>比對 Shopify 訂單，
+                    回寫成台灣配送追蹤（更新現有 fulfillment 或建立），並發出貨通知信給客戶。
+                    每天有人開工具時會自動同步一次；同一單同一單號只會回寫一次、不重複發信。
+                </p>
+                <div id="tw-tracking-status" style="color:#aaa;font-size:13px;">載入中…</div>
+            </div>
+            <div class="card">
+                <h3>
+                    📤 出檔案給廠商
+                    <button class="btn btn-secondary refresh-btn" onclick="loadExports()">🔄 重新整理</button>
+                </h3>
+                <p style="color:#888;font-size:13px;margin-bottom:14px;line-height:1.6;">
+                    勾選下方訂單 → 選擇廠商（Nigel / 小客戶大價值）→ 下載 Excel。<br>
+                    匯出後該筆訂單會被標記「已出檔案」，下次不會再出現。
+                    <span style="color:#f39c12;">編號自動產生「客戶訂單號-MMDD」</span>，例如 <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-family:ui-monospace,monospace;">1234-0616</code>。
+                </p>
+
+                <div class="export-toolbar" id="export-toolbar" style="display:none;">
+                    <span>✅ 已勾選 <span class="export-stat" id="export-selected-count">0</span> 筆</span>
+                    <div style="margin-left:auto;display:flex;gap:10px;align-items:center;">
+                        <label>廠商：</label>
+                        <select id="exports-vendor-select">
+                            <!-- 由 JS 從 /api/exports/vendors 填入 -->
+                        </select>
+                        <button class="btn btn-primary" onclick="generateExportFile()">📥 下載 Excel + 標記已出檔案</button>
+                    </div>
+                </div>
+
+                <div id="exports-loading" class="loading">載入中</div>
+                <table id="exports-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th style="width:36px;"><input type="checkbox" id="export-chk-all" onchange="toggleAllExports(this)" style="accent-color:#f39c12;cursor:pointer;width:15px;height:15px;"></th>
+                            <th>客戶單號</th>
+                            <th>收件人</th>
+                            <th>地址</th>
+                            <th>電話</th>
+                            <th>包裹 ID</th>
+                            <th>建立日期</th>
+                            <th>運單號</th>
+                            <th>預覽編號</th>
+                        </tr>
+                    </thead>
+                    <tbody id="exports-body"></tbody>
+                </table>
+
+                <!-- 出檔案歷史 -->
+                <div style="margin-top:30px;">
+                    <h4 style="color:#aaa;font-size:14px;margin-bottom:10px;">📜 最近匯出記錄</h4>
+                    <table id="exports-history-table" style="font-size:13px;">
+                        <thead>
+                            <tr>
+                                <th>批次 ID</th>
+                                <th>廠商</th>
+                                <th>訂單數</th>
+                                <th>匯出時間</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exports-history-body">
+                            <tr><td colspan="4" style="text-align:center;color:#666;padding:20px;">無記錄</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 創建運單 Modal -->
+    <div class="modal" id="create-order-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🚀 創建 JPD 運單</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="mode-selector">
+                <div class="mode-option selected" data-mode="self" onclick="selectMode('self')">
+                    <h4>📦 自出貨</h4>
+                    <p>貨物在你這邊，JPD 來收</p>
+                </div>
+                <div class="mode-option" data-mode="warehouse" onclick="selectMode('warehouse')">
+                    <h4>🏭 倉庫代發</h4>
+                    <p>貨物已在 JPD 倉庫</p>
+                </div>
+            </div>
+            <form id="create-order-form">
+                <input type="hidden" id="form-shopify-order-id">
+                <input type="hidden" id="form-mode" value="self">
+                <div class="form-group">
+                    <label>客戶運單號（Shopify 訂單號）</label>
+                    <input type="text" id="form-customer-order-id" required>
+                </div>
+                <div class="form-group">
+                    <label>收件人姓名</label>
+                    <input type="text" id="form-recipient" required>
+                </div>
+                <div class="form-group">
+                    <label>收件人電話</label>
+                    <input type="text" id="form-phone" required>
+                </div>
+                <div class="form-group">
+                    <label>收件地址</label>
+                    <textarea id="form-address" rows="2" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>商品資訊</label>
+                    <div class="items-list" id="form-items"></div>
+                </div>
+                <div class="form-group" id="warehouse-packages-group" style="display:none;">
+                    <label>選擇倉庫包裹（倉庫代發模式）</label>
+                    <select id="form-package-id" multiple></select>
+                </div>
+                <div class="form-group">
+                    <label>📦 入庫包裹 ID（JPD 倉庫包裹編號，多個用逗號分隔）</label>
+                    <input type="text" id="form-package-ids" placeholder="例如: 7465126 或 7465126,7465127">
+                    <p style="font-size:12px; color:#888; margin-top:4px;">倉庫代發必填，自出貨可留空（系統會自動預報）</p>
+                </div>
+                <div class="form-group">
+                    <label>備註</label>
+                    <input type="text" id="form-memo">
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">🚀 創建運單</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        let shopifyOrders = [];
+        let jpdPackages = [];
+        let currentOrder = null;
+        const ORDER_PAGE_SIZE = 30;
+        let orderPage = 1;
+        let filteredShopifyOrders = [];
+
+        // === 出檔案用 ===
+        let exportsCache = [];          // 目前待出檔案的訂單
+        let exportsVendorsCache = [];   // 廠商清單
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadShopifyOrders();
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+                    if (tab.dataset.tab === 'jpd') loadJpdOrders();
+                    if (tab.dataset.tab === 'packages') loadJpdPackages();
+                    if (tab.dataset.tab === 'exports') { loadExports(); loadTwTrackingStatus(); }
+                });
+            });
+            document.getElementById('create-order-form').addEventListener('submit', handleCreateOrder);
+        });
+        
+        async function loadShopifyOrders() {
+            document.getElementById('shopify-orders-loading').style.display = 'block';
+            document.getElementById('shopify-orders-table').style.display = 'none';
+            try {
+                const res = await fetch('/api/shopify/orders?status=unfulfilled');
+                const data = await res.json();
+                if (data.success) {
+                    shopifyOrders = data.orders;
+                    filteredShopifyOrders = shopifyOrders;
+                    orderPage = 1;
+                    renderShopifyOrders();
+                } else { showToast('載入失敗: ' + data.error, 'error'); }
+            } catch (e) { showToast('網路錯誤', 'error'); }
+            document.getElementById('shopify-orders-loading').style.display = 'none';
+            document.getElementById('shopify-orders-table').style.display = 'table';
+        }
+        
+        function filterShopifyOrders() {
+            const q = (document.getElementById('shopify-order-search').value || '').trim().toUpperCase();
+            orderPage = 1;
+            if (!q) { filteredShopifyOrders = shopifyOrders; }
+            else {
+                filteredShopifyOrders = shopifyOrders.filter(o =>
+                    (o.name || '').toUpperCase().includes(q) ||
+                    (o.customer_name || '').toUpperCase().includes(q) ||
+                    (o.address || '').toUpperCase().includes(q) ||
+                    (o.phone || '').includes(q)
+                );
+            }
+            renderShopifyOrders();
+        }
+
+        function renderShopifyOrders() {
+            const total = filteredShopifyOrders.length;
+            const totalPages = Math.max(1, Math.ceil(total / ORDER_PAGE_SIZE));
+            if (orderPage > totalPages) orderPage = totalPages;
+            const start = (orderPage - 1) * ORDER_PAGE_SIZE;
+            const pageList = filteredShopifyOrders.slice(start, Math.min(start + ORDER_PAGE_SIZE, total));
+            const countEl = document.getElementById('shopify-order-count');
+            const q = (document.getElementById('shopify-order-search')?.value || '').trim();
+            countEl.textContent = q ? `搜尋到 ${total} 筆（共 ${shopifyOrders.length} 筆）` : `共 ${total} 筆`;
+            const tbody = document.getElementById('shopify-orders-body');
+            tbody.innerHTML = pageList.map(order => `
+                <tr>
+                    <td><strong>${order.name}</strong></td>
+                    <td>${order.customer_name}</td>
+                    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${order.address}</td>
+                    <td>${order.phone || '-'}</td>
+                    <td>${order.currency} ${order.total_price}</td>
+                    <td><span class="status status-${order.fulfillment_status}">${order.fulfillment_status}</span></td>
+                </tr>
+            `).join('');
+            renderOrderPagination(totalPages);
+        }
+
+        function renderOrderPagination(totalPages) {
+            const container = document.getElementById('shopify-orders-pagination');
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
+            let html = '';
+            html += `<button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="goOrderPage(1)" ${orderPage===1?'disabled':''}>«</button>`;
+            html += `<button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="goOrderPage(${orderPage-1})" ${orderPage===1?'disabled':''}>‹</button>`;
+            let startP = Math.max(1, orderPage - 3);
+            let endP = Math.min(totalPages, startP + 6);
+            if (endP - startP < 6) startP = Math.max(1, endP - 6);
+            for (let p = startP; p <= endP; p++) {
+                const active = p === orderPage ? 'background:rgba(243,156,18,.2);border-color:#f39c12;color:#f39c12;font-weight:700;' : '';
+                html += `<button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;${active}" onclick="goOrderPage(${p})">${p}</button>`;
+            }
+            html += `<button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="goOrderPage(${orderPage+1})" ${orderPage===totalPages?'disabled':''}>›</button>`;
+            html += `<button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="goOrderPage(${totalPages})" ${orderPage===totalPages?'disabled':''}>»</button>`;
+            html += `<span style="font-size:12px;color:#888;">第 ${orderPage}/${totalPages} 頁</span>`;
+            container.innerHTML = html;
+        }
+
+        function goOrderPage(p) {
+            const totalPages = Math.max(1, Math.ceil(filteredShopifyOrders.length / ORDER_PAGE_SIZE));
+            if (p < 1 || p > totalPages) return;
+            orderPage = p;
+            renderShopifyOrders();
+        }
+
+        function toggleAllOrders(chk) {
+            document.querySelectorAll('.order-chk').forEach(c => c.checked = chk.checked);
+            updateBatchBtn();
+        }
+
+        function updateBatchBtn() {
+            const checked = document.querySelectorAll('.order-chk:checked');
+            const btn = document.getElementById('batchPushBtn');
+            document.getElementById('batchCount').textContent = checked.length;
+            btn.style.display = checked.length >= 2 ? 'inline-block' : 'none';
+        }
+
+        function openBatchModal() {
+            const checkedIds = [...document.querySelectorAll('.order-chk:checked')].map(c => c.value);
+            const selectedOrders = shopifyOrders.filter(o => checkedIds.includes(String(o.id)));
+            if (selectedOrders.length < 2) { showToast('請至少勾選 2 筆訂單', 'error'); return; }
+            const first = selectedOrders[0];
+            currentOrder = {
+                id: first.id,
+                name: selectedOrders.map(o => o.name).join('+'),
+                customer_name: first.customer_name,
+                phone: first.phone,
+                address: first.address,
+                line_items: [],
+                _merged_order_ids: selectedOrders.map(o => o.id),
+                _merged_order_names: selectedOrders.map(o => o.name),
+            };
+            selectedOrders.forEach(o => {
+                o.line_items.forEach(item => currentOrder.line_items.push({...item, _from_order: o.name}));
+            });
+            document.getElementById('form-shopify-order-id').value = first.id;
+            document.getElementById('form-customer-order-id').value = selectedOrders.map(o => o.name.replace('#','')).join('+');
+            document.getElementById('form-recipient').value = first.customer_name;
+            document.getElementById('form-phone').value = first.phone || '';
+            document.getElementById('form-address').value = first.address;
+            const itemsHtml = '<div style="margin-bottom:8px;font-size:12px;color:#f39c12;font-weight:600;">📦 合併 ' + selectedOrders.length + ' 筆訂單</div>'
+                + currentOrder.line_items.map(item =>
+                    '<div class="item"><span>' + item.title + (item.variant_title ? ' (' + item.variant_title + ')' : '') + ' <span style="font-size:11px;color:#888;">' + (item._from_order||'') + '</span></span><span>x' + item.quantity + ' / ' + item.price + '</span></div>'
+                ).join('');
+            document.getElementById('form-items').innerHTML = itemsHtml;
+            document.getElementById('create-order-modal').classList.add('show');
+        }
+        
+        let allJpdOrders = [];
+        
+        function jpdQuickDate(days) {
+            const today = new Date();
+            const fmt = d => d.toISOString().split('T')[0];
+            document.getElementById('jpd-date-to').value = fmt(today);
+            if (days === 0) {
+                document.getElementById('jpd-date-from').value = fmt(today);
+            } else {
+                const from = new Date(today);
+                from.setDate(from.getDate() - days);
+                document.getElementById('jpd-date-from').value = fmt(from);
+            }
+            filterJpdOrders();
+        }
+        
+        (function initJpdDates() {
+            const today = new Date();
+            const fmt = d => d.toISOString().split('T')[0];
+            const from = new Date(today);
+            from.setDate(from.getDate() - 90);
+            document.getElementById('jpd-date-from').value = fmt(from);
+            document.getElementById('jpd-date-to').value = fmt(today);
+        })();
+        
+        async function loadJpdOrders() {
+            document.getElementById('jpd-orders-loading').style.display = 'block';
+            document.getElementById('jpd-orders-table').style.display = 'none';
+            try {
+                const [liveRes, histRes] = await Promise.all([
+                    fetch('/api/jpd/orders').then(r => r.json()).catch(() => ({success:false})),
+                    fetch('/api/jpd/order_history').then(r => r.json()).catch(() => ({success:false}))
+                ]);
+                const liveOrders = liveRes.success ? liveRes.orders : [];
+                const histOrders = histRes.success ? histRes.orders : [];
+                const merged = new Map();
+                for (const h of histOrders) {
+                    const key = h.customer_order_id || h.logis_num || `hist-${h.id}`;
+                    merged.set(key, { logis_num: h.logis_num || '', customer_order_id: h.customer_order_id || '', package_ids: h.package_ids || '', recipient: h.recipient || '', tel: h.phone || '', addr1: h.address || '', create_date: h.created_at || '', status_name: h.status || '已建立', status_id: '', source: 'local', items: h.items || [], memo: h.memo || '' });
+                }
+                for (const o of liveOrders) {
+                    const key = o.customer_order_id || o.logis_num;
+                    const prev = merged.get(key); merged.set(key, {...o, source: 'jpd', package_ids: prev?.package_ids || ''});
+                }
+                allJpdOrders = Array.from(merged.values());
+                allJpdOrders.sort((a, b) => (b.create_date || b.created_at || '').localeCompare(a.create_date || a.created_at || ''));
+                filterJpdOrders();
+            } catch (e) { showToast('網路錯誤', 'error'); }
+            document.getElementById('jpd-orders-loading').style.display = 'none';
+            document.getElementById('jpd-orders-table').style.display = 'table';
+        }
+        
+        function filterJpdOrders() {
+            const q = (document.getElementById('jpd-order-search').value || '').trim().toUpperCase();
+            const dateFrom = document.getElementById('jpd-date-from').value;
+            const dateTo = document.getElementById('jpd-date-to').value;
+            let list = allJpdOrders;
+            if (dateFrom || dateTo) {
+                list = list.filter(o => {
+                    const d = (o.create_date || o.created_at || '').substring(0, 10);
+                    if (!d) return true;
+                    if (dateFrom && d < dateFrom) return false;
+                    if (dateTo && d > dateTo) return false;
+                    return true;
+                });
+            }
+            if (q) {
+                list = list.filter(o =>
+                    (o.logis_num || '').toUpperCase().includes(q) ||
+                    (o.customer_order_id || '').toUpperCase().includes(q) ||
+                    (o.recipient || '').toUpperCase().includes(q) ||
+                    (o.tel || '').includes(q) ||
+                    (o.addr1 || '').toUpperCase().includes(q)
+                );
+            }
+            renderJpdOrders(list);
+        }
+        
+        function renderJpdOrders(orders) {
+            const countEl = document.getElementById('jpd-order-count');
+            const q = (document.getElementById('jpd-order-search')?.value || '').trim();
+            countEl.textContent = q ? `搜尋到 ${orders.length} 筆（共 ${allJpdOrders.length} 筆）` : `共 ${orders.length} 筆`;
+            const tbody = document.getElementById('jpd-orders-body');
+            if (!orders.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#666;padding:30px;">無運單記錄</td></tr>'; return; }
+            tbody.innerHTML = orders.map(order => {
+                const statusColor = (order.status_name || '').includes('发货') ? 'status-processing' : (order.status_name || '').includes('完成') || (order.status_name || '').includes('签收') ? 'status-fulfilled' : 'status-unfulfilled';
+                const sourceTag = order.source === 'jpd'
+                    ? '<span style="font-size:10px;padding:2px 6px;background:rgba(39,174,96,0.2);color:#27ae60;border-radius:8px;margin-left:4px;">即時</span>'
+                    : '<span style="font-size:10px;padding:2px 6px;background:rgba(243,156,18,0.2);color:#f39c12;border-radius:8px;margin-left:4px;">歷史</span>';
+                return `<tr>
+                    <td><strong>${order.logis_num || '-'}</strong></td>
+                    <td>${order.customer_order_id || '-'}</td>
+                    <td style="font-size:12px;color:#3498db;font-weight:600;">${order.package_ids || '-'}</td>
+                    <td>${order.recipient || '-'}</td>
+                    <td style="font-size:12px;">${order.tel || '-'}</td>
+                    <td style="max-width:200px;font-size:12px;">${order.addr1 || '-'}</td>
+                    <td style="font-size:12px;">${order.create_date || order.created_at || '-'}</td>
+                    <td><span class="status ${statusColor}">${order.status_name || '-'}</span>${sourceTag}</td>
+                    <td class="order-actions">
+                        ${order.status_id === '1' ? `<button class="btn btn-success btn-sm" onclick="confirmOrder('${order.customer_order_id}')">✓ 確認發貨</button><button class="btn btn-danger btn-sm" onclick="cancelOrder('${order.customer_order_id}')">✗ 取消</button>` : ''}
+                        ${order.logis_num ? `<a href="https://www.sgxpress.com/query/?logic_num=${order.logis_num}" target="_blank" class="btn btn-secondary" style="padding:4px 10px;font-size:11px;">📍追蹤</a>` : ''}
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+        
+        async function loadJpdPackages() {
+            document.getElementById('jpd-packages-loading').style.display = 'block';
+            document.getElementById('jpd-packages-table').style.display = 'none';
+            try {
+                const res = await fetch('/api/jpd/packages');
+                const data = await res.json();
+                if (data.success) { jpdPackages = data.packages; renderJpdPackages(); }
+            } catch (e) { showToast('網路錯誤', 'error'); }
+            document.getElementById('jpd-packages-loading').style.display = 'none';
+            document.getElementById('jpd-packages-table').style.display = 'table';
+        }
+        
+        function renderJpdPackages(list) {
+            list = list || jpdPackages;
+            const tbody = document.getElementById('jpd-packages-body');
+            const countEl = document.getElementById('pkg-search-count');
+            const q = (document.getElementById('pkg-search')?.value || '').trim();
+            countEl.textContent = q ? `搜尋到 ${list.length} 筆（共 ${jpdPackages.length} 筆）` : `共 ${list.length} 筆`;
+            tbody.innerHTML = list.map(pkg => {
+                const weightKg = pkg.weight ? (parseFloat(pkg.weight) / 1000).toFixed(1) : '-';
+                const dims = (pkg.p_long && pkg.p_width && pkg.p_height) ? `${pkg.p_long}×${pkg.p_width}×${pkg.p_height}` : '-';
+                const photoHtml = pkg.photo_thumbnail
+                    ? `<a href="${pkg.photo}" target="_blank"><img src="${pkg.photo_thumbnail}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;cursor:pointer;" loading="lazy"></a>`
+                    : '-';
+
+                // ★ 訂單號碼欄：優先顯示 customer_order_id，其次 local_logis_num
+                const orderNum = pkg.customer_order_id || pkg.local_logis_num || '';
+                const orderNumHtml = orderNum
+                    ? `<span style="color:#3498db;font-weight:700;font-size:13px;">${orderNum}</span>`
+                    : '<span style="color:#555;font-size:12px;">-</span>';
+
+                // 收件人欄（不再重複顯示訂單號）
+                const recipientHtml = pkg.recipient
+                    ? `<strong style="color:#f39c12;">${pkg.recipient}</strong>`
+                    : '<span style="color:#666;">未配單</span>';
+
+                return `<tr>
+                    <td>${photoHtml}</td>
+                    <td><strong>${pkg.package_id}</strong></td>
+                    <td>${orderNumHtml}</td>
+                    <td>${recipientHtml}</td>
+                    <td style="font-size:12px;">${pkg.tel || '-'}</td>
+                    <td>${weightKg} kg</td>
+                    <td style="font-size:12px;">${dims}</td>
+                    <td style="font-size:12px;">${pkg.stock_date}</td>
+                    <td><span class="badge">${pkg.status_name}</span></td>
+                </tr>`;
+            }).join('');
+            
+            const select = document.getElementById('form-package-id');
+            select.innerHTML = jpdPackages.map(pkg => {
+                const w = pkg.weight ? (parseFloat(pkg.weight)/1000).toFixed(1)+'kg' : '';
+                const r = pkg.recipient || '';
+                return `<option value="${pkg.package_id}">${pkg.package_id} ${r} ${w}</option>`;
+            }).join('');
+        }
+        
+        function filterJpdPackages() {
+            const q = (document.getElementById('pkg-search').value || '').trim().toUpperCase();
+            if (!q) { renderJpdPackages(jpdPackages); return; }
+            const filtered = jpdPackages.filter(pkg =>
+                String(pkg.package_id).includes(q) ||
+                (pkg.customer_order_id || '').toUpperCase().includes(q) ||
+                (pkg.local_logis_num || '').toUpperCase().includes(q) ||
+                (pkg.recipient || '').toUpperCase().includes(q) ||
+                (pkg.tel || '').includes(q)
+            );
+            renderJpdPackages(filtered);
+        }
+        
+        function openCreateModal(orderId) {
+            currentOrder = shopifyOrders.find(o => o.id == orderId);
+            if (!currentOrder) return;
+            document.getElementById('form-shopify-order-id').value = currentOrder.id;
+            document.getElementById('form-customer-order-id').value = currentOrder.name.replace('#', '');
+            document.getElementById('form-recipient').value = currentOrder.customer_name;
+            document.getElementById('form-phone').value = currentOrder.phone || '';
+            document.getElementById('form-address').value = currentOrder.address;
+            const itemsHtml = currentOrder.line_items.map(item => `
+                <div class="item">
+                    <span>${item.title} ${item.variant_title ? '(' + item.variant_title + ')' : ''}</span>
+                    <span>x${item.quantity} / ${item.price}</span>
+                </div>
+            `).join('');
+            document.getElementById('form-items').innerHTML = itemsHtml;
+            document.getElementById('create-order-modal').classList.add('show');
+        }
+        
+        function closeModal() { document.getElementById('create-order-modal').classList.remove('show'); currentOrder = null; }
+        
+        function selectMode(mode) {
+            document.querySelectorAll('.mode-option').forEach(el => el.classList.remove('selected'));
+            document.querySelector(`.mode-option[data-mode="${mode}"]`).classList.add('selected');
+            document.getElementById('form-mode').value = mode;
+            document.getElementById('warehouse-packages-group').style.display = mode === 'warehouse' ? 'block' : 'none';
+            if (mode === 'warehouse' && jpdPackages.length === 0) loadJpdPackages();
+        }
+        
+        async function handleCreateOrder(e) {
+            e.preventDefault();
+            const mode = document.getElementById('form-mode').value;
+            const data = {
+                mode: mode,
+                shopify_order_id: document.getElementById('form-shopify-order-id').value,
+                customer_order_id: document.getElementById('form-customer-order-id').value,
+                recipient: document.getElementById('form-recipient').value,
+                phone: document.getElementById('form-phone').value,
+                address: document.getElementById('form-address').value,
+                memo: document.getElementById('form-memo').value,
+                declare_list: currentOrder.line_items.map(item => ({
+                    product_name: item.title,
+                    product_name_local: item.title,
+                    product_num: item.quantity,
+                    product_price: Math.round(parseFloat(item.price))
+                }))
+            };
+            const packageIdsInput = document.getElementById('form-package-ids').value.trim();
+            if (packageIdsInput) {
+                data.package_ids = packageIdsInput.split(/[,，、\s]+/).filter(id => id.trim());
+                data.mode = 'warehouse';
+            }
+            if (mode === 'warehouse' && (!data.package_ids || data.package_ids.length === 0)) {
+                showToast('❌ 倉庫代發模式請填入入庫包裹 ID', 'error'); return;
+            }
+            try {
+                const res = await fetch('/api/jpd/create_order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                const result = await res.json();
+                if (result.success) {
+                    const logisNum = result.logis_num || '';
+                    const mergedIds = currentOrder._merged_order_ids || [currentOrder.id];
+                    const mergedNames = currentOrder._merged_order_names || [currentOrder.name];
+                    showToast(`✅ ${result.message || '運單創建成功'}！物流號: ${logisNum || 'N/A'}`, 'success');
+                    closeModal(); loadShopifyOrders();
+                    if (logisNum) {
+                        const orderDesc = mergedIds.length > 1 ? `${mergedIds.length} 筆訂單（${mergedNames.join(', ')}）` : `訂單`;
+                        if (confirm(`是否將物流單號 ${logisNum} 回寫到 Shopify 的${orderDesc}？`)) {
+                            for (const oid of mergedIds) await fulfillShopifyOrder(oid, logisNum);
+                        }
+                    }
+                } else { showToast('❌ ' + result.error, 'error'); }
+            } catch (e) { console.error('錯誤:', e); showToast('網路錯誤', 'error'); }
+        }
+        
+        async function confirmOrder(customerOrderId) {
+            if (!confirm(`確定要發貨訂單 ${customerOrderId}？`)) return;
+            try {
+                const res = await fetch('/api/jpd/confirm_order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customer_order_id: customerOrderId }) });
+                const result = await res.json();
+                if (result.success) { showToast('✅ 確認發貨成功', 'success'); loadJpdOrders(); }
+                else { showToast('❌ ' + result.error, 'error'); }
+            } catch (e) { showToast('網路錯誤', 'error'); }
+        }
+        
+        async function cancelOrder(customerOrderId) {
+            if (!confirm(`確定要取消訂單 ${customerOrderId}？`)) return;
+            try {
+                const res = await fetch('/api/jpd/cancel_order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customer_order_id: customerOrderId }) });
+                const result = await res.json();
+                if (result.success) { showToast('✅ 訂單已取消', 'success'); loadJpdOrders(); }
+                else { showToast('❌ ' + result.error, 'error'); }
+            } catch (e) { showToast('網路錯誤', 'error'); }
+        }
+        
+        async function fulfillShopifyOrder(orderId, trackingNumber) {
+            try {
+                const res = await fetch('/api/shopify/fulfill', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ shopify_order_id: orderId, tracking_number: trackingNumber }) });
+                const result = await res.json();
+                if (result.success) { showToast('✅ 已回寫 Shopify', 'success'); }
+                else { showToast('⚠️ 回寫失敗，請手動更新', 'error'); }
+            } catch (e) { showToast('⚠️ 回寫失敗', 'error'); }
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // =====================================================
+        // 📤 出檔案
+        // =====================================================
+
+        async function loadTwTrackingStatus() {
+            const el = document.getElementById('tw-tracking-status');
+            if (!el) return;
+            try {
+                const res = await fetch('/api/tracking/status');
+                const d = await res.json();
+                if (!d.success) { el.textContent = '無法載入'; return; }
+                el.innerHTML = '已回寫 <strong style="color:#fff;">' + (d.ok || 0) + '</strong> 筆'
+                    + '（累計處理 ' + (d.total || 0) + ' 筆）｜上次同步：<strong style="color:#fff;">'
+                    + (d.last_sync || '尚未同步') + '</strong>';
+            } catch (e) { el.textContent = '無法載入同步狀態'; }
+        }
+        async function syncTwTracking(notify) {
+            const el = document.getElementById('tw-tracking-status');
+            if (el) el.textContent = '同步中…（回寫 Shopify 可能需要一點時間）';
+            try {
+                const res = await fetch('/api/tracking/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ notify: !!notify }) });
+                const d = await res.json();
+                if (d.success) {
+                    showToast('✅ 同步完成（' + (notify ? '有發信' : '靜默') + '）：比對 ' + d.matched + '、回寫 ' + d.pushed + '、略過 ' + d.skipped + '、失敗 ' + d.errors, 'success');
+                } else {
+                    showToast(d.error || '同步失敗', 'error');
+                }
+            } catch (e) { showToast('同步失敗（網路錯誤）', 'error'); }
+            loadTwTrackingStatus();
+        }
+
+        async function loadExports() {
+            document.getElementById('exports-loading').style.display = 'block';
+            document.getElementById('exports-table').style.display = 'none';
+            document.getElementById('export-toolbar').style.display = 'none';
+            try {
+                // 並行載入廠商清單、待出訂單、歷史記錄
+                const [vRes, pRes, hRes] = await Promise.all([
+                    fetch('/api/exports/vendors').then(r => r.json()),
+                    fetch('/api/exports/pending').then(r => r.json()),
+                    fetch('/api/exports/history').then(r => r.json()),
+                ]);
+                if (vRes.success) {
+                    exportsVendorsCache = vRes.vendors || [];
+                    const sel = document.getElementById('exports-vendor-select');
+                    sel.innerHTML = exportsVendorsCache.map(v =>
+                        `<option value="${v.id}">${v.display_name}</option>`
+                    ).join('');
+                }
+                if (pRes.success) {
+                    exportsCache = pRes.items || [];
+                    renderExportsTable();
+                } else {
+                    showToast('載入失敗: ' + (pRes.error || '未知錯誤'), 'error');
+                }
+                if (hRes.success) renderExportsHistory(hRes.history || []);
+            } catch (e) {
+                console.error(e);
+                showToast('網路錯誤', 'error');
+            }
+            document.getElementById('exports-loading').style.display = 'none';
+            document.getElementById('exports-table').style.display = 'table';
+        }
+
+        function renderExportsTable() {
+            const tbody = document.getElementById('exports-body');
+            if (!exportsCache.length) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#666;padding:40px;">🎉 沒有待出檔案的訂單<br><small style="color:#444;">所有 JPD 運單都已匯出給廠商</small></td></tr>';
+                document.getElementById('export-toolbar').style.display = 'none';
+                return;
+            }
+            tbody.innerHTML = exportsCache.map(o => {
+                // 自動產生「訂單號-MMDD」預覽碼
+                const dateSrc = o.created_at || '';
+                let mmdd = '';
+                if (dateSrc && dateSrc.length >= 10) {
+                    mmdd = dateSrc.substring(5, 7) + dateSrc.substring(8, 10);
+                } else {
+                    const d = new Date();
+                    mmdd = String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+                }
+                const coid = (o.customer_order_id || '').toString().replace(/^#/, '').trim() || `ORD${o.id}`;
+                const previewCode = `${coid}-${mmdd}`;
+                return `<tr>
+                    <td><input type="checkbox" class="export-chk" data-id="${o.id}" onchange="updateExportSelection()" style="accent-color:#f39c12;cursor:pointer;width:15px;height:15px;"></td>
+                    <td><strong>${o.customer_order_id || '-'}</strong></td>
+                    <td>${o.recipient || '-'}</td>
+                    <td style="font-size:12px;max-width:200px;">${o.address || '-'}</td>
+                    <td style="font-size:12px;">${o.phone || '-'}</td>
+                    <td style="font-size:12px;color:#3498db;font-weight:600;">${o.package_ids || '-'} <span style="color:#666;">(${o.package_count})</span></td>
+                    <td style="font-size:11px;color:#999;">${(o.created_at || '').slice(5, 16)}</td>
+                    <td style="font-size:12px;">${o.logis_num || '-'}</td>
+                    <td style="font-family:ui-monospace,monospace;font-size:13px;font-weight:600;color:#c9a55c;">${previewCode}</td>
+                </tr>`;
+            }).join('');
+            updateExportSelection();
+        }
+
+        function toggleAllExports(chk) {
+            document.querySelectorAll('.export-chk').forEach(c => c.checked = chk.checked);
+            updateExportSelection();
+        }
+
+        function updateExportSelection() {
+            const count = document.querySelectorAll('.export-chk:checked').length;
+            document.getElementById('export-selected-count').textContent = count;
+            document.getElementById('export-toolbar').style.display = count > 0 ? 'flex' : 'none';
+        }
+
+        async function generateExportFile() {
+            const checks = document.querySelectorAll('.export-chk:checked');
+            if (!checks.length) { showToast('請先勾選要出檔案的訂單', 'error'); return; }
+            const ids = Array.from(checks).map(c => parseInt(c.dataset.id));
+            const vendor = document.getElementById('exports-vendor-select').value;
+            const vendorName = (exportsVendorsCache.find(v => v.id === vendor) || {}).display_name || vendor;
+            if (!confirm(`確定要產生 ${vendorName} 的 Excel 並標記 ${ids.length} 筆訂單為「已出檔案」？\n\n標記後該批訂單下次不會再出現。`)) return;
+
+            const btn = event.target;
+            const origText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '⏳ 產生中…';
+
+            try {
+                const res = await fetch('/api/exports/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ vendor, ids })
+                });
+                if (!res.ok) {
+                    const errJson = await res.json().catch(() => ({ error: '產生失敗' }));
+                    showToast('❌ ' + (errJson.error || '產生失敗'), 'error');
+                    btn.disabled = false; btn.textContent = origText;
+                    return;
+                }
+                // 下載 Excel
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                // 從 Content-Disposition 抓檔名
+                const cd = res.headers.get('Content-Disposition') || '';
+                const m = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+                a.download = m ? decodeURIComponent(m[1]) : `${vendor}_export.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+
+                showToast(`✅ 已產生 ${ids.length} 筆訂單的 ${vendorName} Excel`, 'success');
+                // 重新載入清單（剛標記的不會再出現）
+                loadExports();
+            } catch (e) {
+                console.error(e);
+                showToast('網路錯誤', 'error');
+                btn.disabled = false; btn.textContent = origText;
+            }
+        }
+
+        function renderExportsHistory(history) {
+            const tbody = document.getElementById('exports-history-body');
+            if (!history.length) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#666;padding:20px;">無記錄</td></tr>';
+                return;
+            }
+            tbody.innerHTML = history.map(h => `
+                <tr>
+                    <td style="font-family:ui-monospace,monospace;font-size:12px;">${h.batch_id || '-'}</td>
+                    <td>${h.vendor_name || h.vendor || '-'}</td>
+                    <td><strong>${h.order_count}</strong> 筆</td>
+                    <td style="font-size:12px;color:#999;">${h.exported_at || '-'}</td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

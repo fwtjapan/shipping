@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{{ brand.name }} - 雲端集運服務</title>
+
+    <!-- ===== PWA 客戶端 ===== -->
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#16213e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="集運">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; padding: 40px 0 30px; margin-bottom: 30px; }
+        .logo { font-size: 36px; margin-bottom: 10px; }
+        header h1 {
+            font-size: 32px; font-weight: 700;
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-bottom: 8px;
+        }
+        header p { color: #666; font-size: 14px; letter-spacing: 2px; }
+        .card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px; padding: 30px; margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .card-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #888; font-size: 13px; font-weight: 500; }
+        .form-control {
+            width: 100%; padding: 14px 16px;
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; color: #fff; font-size: 15px; font-family: inherit; transition: all 0.3s;
+        }
+        .form-control:focus { outline: none; border-color: #f39c12; box-shadow: 0 0 0 3px rgba(243,156,18,0.1); }
+        .form-control::placeholder { color: #555; }
+        .btn {
+            padding: 14px 28px; border: none; border-radius: 10px;
+            font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer;
+            transition: all 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #f39c12, #e67e22); color: #fff;
+            box-shadow: 0 4px 15px rgba(243,156,18,0.3);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(243,156,18,0.4); }
+        .btn-secondary { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+        .btn-success { background: linear-gradient(135deg, #27ae60, #2ecc71); color: #fff; }
+        .btn-danger {
+            background: rgba(231,76,60,0.2); color: #e74c3c;
+            border: 1px solid rgba(231,76,60,0.3); padding: 8px; min-width: 36px; height: 36px;
+        }
+        .btn-danger:hover { background: rgba(231,76,60,0.3); }
+        .btn-block { width: 100%; }
+
+        /* Login Section */
+        .login-section { max-width: 480px; margin: 0 auto; }
+        .login-section.hidden { display: none; }
+
+        .help-box {
+            margin-top: 24px; padding: 20px;
+            background: linear-gradient(135deg, rgba(6,199,85,0.1), rgba(6,199,85,0.05));
+            border: 1px solid rgba(6,199,85,0.2); border-radius: 12px;
+        }
+        .help-box-title { color: #06C755; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+        .help-box p { color: #888; font-size: 13px; line-height: 1.6; }
+        .line-link {
+            display: inline-flex; align-items: center; gap: 8px;
+            color: #06C755; text-decoration: none; font-weight: 700; font-size: 16px; margin-top: 8px; transition: all 0.3s;
+        }
+        .line-link:hover { color: #05b34c; }
+
+        /* Main Content */
+        .main-content { display: none; }
+        .main-content.active { display: block; }
+
+        /* User Info Bar */
+        .user-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, rgba(39,174,96,0.15), rgba(39,174,96,0.05));
+            border: 1px solid rgba(39,174,96,0.2); border-radius: 12px; margin-bottom: 24px;
+        }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;
+        }
+        .user-name { font-size: 16px; font-weight: 600; color: #fff; }
+        .user-id { font-size: 12px; color: #888; }
+
+        /* Tabs */
+        .tabs {
+            display: flex; gap: 8px; margin-bottom: 24px; padding: 6px;
+            background: rgba(255,255,255,0.03); border-radius: 12px;
+        }
+        .tab {
+            flex: 1; padding: 14px 20px; background: transparent; border: none;
+            border-radius: 8px; color: #888; font-size: 14px; font-weight: 500;
+            font-family: inherit; cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .tab:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .tab.active {
+            background: linear-gradient(135deg, #f39c12, #e67e22); color: #fff;
+            box-shadow: 0 4px 15px rgba(243,156,18,0.3);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Warehouse Info */
+        .warehouse-box {
+            padding: 20px 24px;
+            background: linear-gradient(135deg, rgba(52,152,219,0.1), rgba(52,152,219,0.05));
+            border: 1px solid rgba(52,152,219,0.2); border-radius: 12px; margin-bottom: 24px;
+        }
+        .warehouse-box h4 { color: #3498db; font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .warehouse-box p { font-size: 14px; line-height: 1.8; color: #ccc; }
+        .warehouse-box .highlight { color: #f39c12; font-weight: 700; background: rgba(243,156,18,0.1); padding: 2px 8px; border-radius: 4px; }
+
+        /* Package Card */
+        .package-card {
+            background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px; padding: 24px; margin-bottom: 16px;
+        }
+        .package-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .package-title { font-size: 16px; font-weight: 600; color: #f39c12; display: flex; align-items: center; gap: 8px; }
+
+        /* Item Table */
+        .item-table { width: 100%; margin-bottom: 12px; }
+        .item-row { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-end; }
+        .item-row .col-name { flex: 2; min-width: 150px; }
+        .item-row .col-qty { width: 80px; flex-shrink: 0; }
+        .item-row .col-price { width: 100px; flex-shrink: 0; }
+        .item-row .col-url { flex: 1.5; min-width: 120px; }
+        .item-row .col-action { width: 40px; flex-shrink: 0; }
+        .item-row .form-group { margin-bottom: 0; }
+        .item-row .form-control { padding: 10px 12px; font-size: 14px; }
+        .item-row label { font-size: 11px; color: #666; margin-bottom: 6px; }
+
+        .add-item-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px;
+            background: rgba(39,174,96,0.1); border: 1px dashed rgba(39,174,96,0.4);
+            border-radius: 8px; color: #27ae60; font-size: 13px; font-weight: 500;
+            cursor: pointer; transition: all 0.3s; margin-top: 8px;
+        }
+        .add-item-btn:hover { background: rgba(39,174,96,0.15); }
+        .add-package-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px; padding: 18px;
+            background: rgba(243,156,18,0.05); border: 2px dashed rgba(243,156,18,0.3);
+            border-radius: 12px; color: #f39c12; font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s; margin-bottom: 20px;
+        }
+        .add-package-btn:hover { background: rgba(243,156,18,0.1); }
+
+        /* Package List */
+        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .list-header h3 { font-size: 18px; font-weight: 600; }
+        .package-item {
+            display: grid; grid-template-columns: 1.5fr 1.5fr 1fr 1fr auto;
+            gap: 16px; align-items: center; padding: 20px;
+            background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px; margin-bottom: 10px;
+        }
+        .package-item .label { font-size: 11px; color: #666; margin-bottom: 4px; text-transform: uppercase; }
+        .package-item .value { font-size: 14px; font-weight: 500; }
+
+        .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-waiting { background: rgba(243,156,18,0.15); color: #f39c12; }
+        .status-arrived { background: rgba(39,174,96,0.15); color: #27ae60; }
+        .status-shipped { background: rgba(52,152,219,0.15); color: #3498db; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: #666; }
+        .empty-state .icon { font-size: 56px; margin-bottom: 16px; opacity: 0.5; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; padding: 16px 24px;
+            border-radius: 12px; color: #fff; font-weight: 500; z-index: 1000;
+            animation: slideIn 0.3s ease; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .toast-success { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+        .toast-error { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes promoBlink {
+            0%, 100% { box-shadow: 0 4px 16px rgba(231,76,60,0.35), 0 0 0 0 rgba(231,76,60,0.4); }
+            50%      { box-shadow: 0 4px 20px rgba(231,76,60,0.55), 0 0 0 8px rgba(231,76,60,0); }
+        }
+
+        /* Info styles */
+        .info-section { margin-bottom: 24px; }
+        .info-section-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; color: #fff; }
+        .info-card { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+        .info-card h4 { font-size: 15px; font-weight: 600; color: #f39c12; margin-bottom: 12px; }
+        .info-card p, .info-card li { font-size: 14px; line-height: 1.8; color: #bbb; }
+        .info-card ul { list-style: none; padding: 0; }
+        .info-card ul li { padding: 6px 0; padding-left: 20px; position: relative; }
+        .info-card ul li::before { content: "•"; position: absolute; left: 4px; color: #f39c12; }
+        .price-highlight {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(243,156,18,0.15), rgba(243,156,18,0.05));
+            border: 1px solid rgba(243,156,18,0.3); border-radius: 8px;
+            padding: 10px 18px; font-size: 18px; font-weight: 700; color: #f39c12; margin: 8px 0;
+        }
+        .info-note {
+            font-size: 13px; color: #888; margin-top: 8px; padding: 10px 14px;
+            background: rgba(255,255,255,0.03); border-left: 3px solid rgba(243,156,18,0.4); border-radius: 0 8px 8px 0;
+        }
+        .pricing-table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 12px 0; border-radius: 10px; overflow: hidden; }
+        .pricing-table thead th {
+            background: rgba(243,156,18,0.15); color: #f39c12; font-size: 12px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 16px; text-align: left;
+            border-bottom: 1px solid rgba(243,156,18,0.2);
+        }
+        .pricing-table tbody td { padding: 12px 16px; font-size: 13px; color: #ccc; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top; }
+        .pricing-table tbody tr:last-child td { border-bottom: none; }
+        .pricing-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+        .pricing-table .price-cell { color: #f39c12; font-weight: 700; font-size: 14px; white-space: nowrap; }
+        .pricing-table .free-cell { color: #27ae60; font-weight: 700; }
+        .pricing-table .service-name { color: #fff; font-weight: 500; }
+        .pricing-table .service-desc { font-size: 12px; color: #888; margin-top: 4px; line-height: 1.5; }
+        .tax-note {
+            display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+            background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.2);
+            border-radius: 8px; font-size: 13px; color: #e74c3c; font-weight: 500; margin-top: 12px;
+        }
+        .category-label { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+        .cat-packing { background: rgba(52,152,219,0.15); color: #3498db; }
+        .cat-photo { background: rgba(155,89,182,0.15); color: #9b59b6; }
+        .cat-declare { background: rgba(231,76,60,0.15); color: #e74c3c; }
+        .cat-operation { background: rgba(39,174,96,0.15); color: #27ae60; }
+        .cat-material { background: rgba(243,156,18,0.15); color: #f39c12; }
+        .cat-free { background: rgba(149,165,166,0.15); color: #95a5a6; }
+        .cat-other { background: rgba(255,255,255,0.1); color: #bbb; }
+        .collapse-toggle { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 4px 0; }
+        .collapse-toggle .arrow { transition: transform 0.3s; font-size: 12px; color: #888; }
+        .collapse-toggle.open .arrow { transform: rotate(180deg); }
+        .collapse-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+        .collapse-body.open { max-height: 5000px; }
+
+        @media (max-width: 768px) {
+            .container { padding: 16px; }
+            header { padding: 30px 0 20px; }
+            header h1 { font-size: 26px; }
+            .card { padding: 20px; }
+            .tabs { flex-wrap: wrap; }
+            .tab { flex: 1 1 45%; padding: 12px; font-size: 13px; }
+            .item-row { flex-wrap: wrap; }
+            .item-row .col-name { width: 100%; flex: none; }
+            .item-row .col-qty { width: calc(33% - 8px); }
+            .item-row .col-price { width: calc(33% - 8px); }
+            .item-row .col-action { width: calc(33% - 8px); }
+            .item-row .col-url { width: 100%; flex: none; }
+            .package-item { grid-template-columns: 1fr 1fr; gap: 12px; }
+            .package-item > div:last-child { grid-column: 1 / -1; }
+            .user-bar { flex-direction: column; gap: 16px; text-align: center; }
+            .pricing-table { font-size: 12px; }
+            .pricing-table thead th { padding: 10px 10px; font-size: 11px; }
+            .pricing-table tbody td { padding: 10px 10px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body data-brand-name="{{ brand.name }}" data-line-url="{{ brand.line_url }}" data-line-id="{{ brand.line_id }}" data-bank-name="{{ brand.bank_name }}" data-bank-account="{{ brand.bank_account }}" data-bank-holder="{{ brand.bank_holder }}" data-rate="{{ brand.rate_twd }}">
+    <div class="container">
+        <header>
+            <div class="logo">📦</div>
+            <h1>{{ brand.name }} - 雲端集運服務</h1>
+        </header>
+
+        <!-- ===== 登入區 ===== -->
+        <div id="loginSection">
+            <!-- 登入卡片 -->
+            <div style="max-width: 480px; margin: 0 auto;">
+                <div class="card">
+                    <div class="card-title">🔐 會員登入</div>
+                    <div class="form-group">
+                        <label>會員編號</label>
+                        <input type="text" id="customerId" class="form-control" placeholder="請輸入會員編號（例：G0001）">
+                    </div>
+                    <div class="form-group">
+                        <label>密碼（您的手機號碼）</label>
+                        <input type="password" id="password" class="form-control" placeholder="請輸入手機號碼">
+                    </div>
+                    <button id="loginBtn" class="btn btn-primary btn-block" onclick="login()" style="padding: 14px;">登入</button>
+
+                    <div class="help-box" id="signup-helpbox">
+                        <div class="help-box-title">📋 申請會員編號</div>
+                        <div id="signup-instruction-default">
+                            <p>請到 <a href="{{ brand.signup_url }}" target="_blank" style="color:#fff;font-weight:700;text-decoration:underline;">{{ brand.name }} 網站</a> 申請會員，填入姓名、電話（需完成 EZWAY）、收件地址。（請務必全部填入繁體中文）<br>完成之後請截圖傳給客服，客服會立刻幫你開集運帳號！</p>
+                            {% if brand.line_url %}<a href="{{ brand.line_url }}" target="_blank" class="line-link">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 5.82 2 10.5c0 2.55 1.25 4.83 3.21 6.41-.12.44-.78 2.82-.81 3.04-.05.32.12.63.42.76.1.04.21.06.31.06.21 0 .41-.08.56-.24l3.37-2.47c.95.15 1.93.23 2.94.23 5.52 0 10-3.82 10-8.5S17.52 2 12 2z"/>
+                                </svg>
+                                客服 LINE: {{ brand.line_id }}
+                            </a>{% endif %}
+                        </div>
+                        <div id="signup-instruction-agent" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== 公開收費表 ===== -->
+            <div style="margin-top: 16px;">
+
+{% with show_banner = True %}{% include "_pricing.html" %}{% endwith %}
+
+            </div><!-- end public pricing -->
+        </div><!-- end loginSection -->
+
+        <!-- ===== 登入後主要內容 ===== -->
+        <div class="main-content" id="mainContent">
+            <div class="user-bar">
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div>
+                        <div class="user-name" id="userName">歡迎</div>
+                        <div class="user-id">會員編號：<span id="userIdDisplay"></span></div>
+                        <div id="userContactInfo" style="display:none;font-size:12px;color:#888;margin-top:4px;line-height:1.6;">
+                            <span id="userPhone"></span><br>
+                            <span id="userAddress"></span>
+                            <button onclick="openAddressBook()" style="background:rgba(243,156,18,.15);border:1px solid rgba(243,156,18,.3);color:#f39c12;padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer;margin-left:6px;">📒 地址簿</button><button onclick="openDeclarants()" style="background:rgba(230,126,34,.15);border:1px solid rgba(230,126,34,.35);color:#e67e22;padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer;margin-left:6px;">🧾 申報人</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <!-- 登入後運費顯示：台幣為主，日幣為輔 -->
+                    <div id="shippingRateDisplay" style="display:none; text-align: center;">
+                        <div style="font-size: 11px; color: #888; margin-bottom: 2px;">您的運費</div>
+                        <div style="font-size: 20px; font-weight: 700; color: #f39c12; line-height: 1.2;">
+                            <span id="userShippingRateTwd">-</span>
+                            <span style="font-size: 12px; font-weight: 400; color: #888;"> 台幣/kg</span>
+                        </div>
+                        <div style="font-size: 12px; color: #666; margin-top: 2px;">
+                            ≈ <span id="userShippingRateJpy">-</span> 日圓
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="logout()">登出</button>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('info')">📋 集運介紹</button>
+                <button class="tab" onclick="switchTab('forecast')">📝 預報包裹 <span id="badge-forecast" style="display:none;background:#e74c3c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;min-width:20px;text-align:center;"></span></button>
+                <button class="tab" onclick="switchTab('packages')">📦 我的包裹 <span id="badge-packages" style="display:none;background:#e74c3c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;min-width:20px;text-align:center;"></span></button>
+                <button class="tab" onclick="switchTab('orders')">🚚 運單查詢 <span id="badge-orders" style="display:none;background:#e74c3c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;min-width:20px;text-align:center;"></span></button>
+                <button class="tab" onclick="switchTab('unclaimed')">🔍 無主包裹 <span id="badge-unclaimed" style="display:none;background:#e67e22;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;min-width:20px;text-align:center;"></span></button>
+            </div>
+
+            <!-- 集運介紹（登入後） -->
+            <div class="tab-content active" id="tab-info">
+                <div class="warehouse-box" style="background: linear-gradient(135deg, rgba(243,156,18,0.1), rgba(243,156,18,0.05)); border-color: rgba(243,156,18,0.2); margin-bottom: 24px;">
+                    <h4 style="color: #f39c12;">📍 {{ brand.name }} 集運地址</h4>
+                    <p>
+                        {{ brand.wh_zip }}<br>
+                        <a href="{{ brand.wh_map_url or '#' }}" target="_blank" style="color: #3498db; text-decoration: none;">
+                            {{ brand.wh_address }} <span class="highlight member-code-placeholder">會員編號</span> 🔗</a><br>
+                        收件人：自己的名字＋<span class="highlight member-code-placeholder">會員編號</span><br>
+                        電話：{{ brand.wh_phone }}<br><br>
+                        <p>1、填寫時，客編可以於姓名後面，也可以加在地址最後面,兩者擇其一即可。</p>
+                        <p>2、填寫時，姓名以繁體中文為主，請寫你登錄集運系統的姓名。</p><br >
+                        <span style="color: #e74c3c; font-size: 13px;">⚠️ 如要提貨過來倉庫之前請先和倉庫人員約時間，避免白跑一趟</span><br>
+                        {% if brand.line_url %}<a href="{{ brand.line_url }}" target="_blank" class="warehouse-line-link" style="color: #06C755; text-decoration: none; font-weight: 600;">官方 LINE：{{ brand.line_id }}</a>{% endif %}
+                    </p>
+                    <div style="background: rgba(231,76,60,0.12); border: 1px solid rgba(231,76,60,0.35); border-left: 3px solid #e74c3c; border-radius: 8px; padding: 12px 14px; margin-top: 14px;">
+                        <div style="color: #e74c3c; font-size: 13px; font-weight: 700; margin-bottom: 4px;">💰 代付／代收貨款包裹</div>
+                        <div style="color: #ddd; font-size: 12px; line-height: 1.7;">
+                            若包裹需代付款（代引き／著払い／代金引換），請<strong style="color:#f39c12;">先私訊客服</strong>安排代付款項，否則倉庫將<strong style="color:#e74c3c;">拒收包裹</strong>。<br >
+                        </div>
+                    </div>
+                </div>
+
+{% with show_banner = False %}{% include "_pricing.html" %}{% endwith %}
+            </div>
+
+            <!-- 預報包裹 -->
+            <div class="tab-content" id="tab-forecast">
+                <div class="warehouse-box" style="background: linear-gradient(135deg, rgba(243,156,18,0.1), rgba(243,156,18,0.05)); border-color: rgba(243,156,18,0.2);">
+                    <h4 style="color: #f39c12;">📍 {{ brand.name }} 集運地址</h4>
+                    <p>
+                        {{ brand.wh_zip }}<br>
+                        <a href="{{ brand.wh_map_url or '#' }}" target="_blank" style="color: #3498db; text-decoration: none;">{{ brand.wh_address }} <span class="highlight member-code-placeholder">會員編號</span> 🔗</a><br>
+                        收件人：自己的名字＋<span class="highlight member-code-placeholder">會員編號</span><br>
+                        電話：{{ brand.wh_phone }}<br><br>
+                        <span style="color: #e74c3c; font-size: 13px;">⚠️ 要提貨過來之前請先聯絡，避免白跑一趟</span><br>
+                        {% if brand.line_url %}<a href="{{ brand.line_url }}" target="_blank" class="warehouse-line-link" style="color: #06C755; text-decoration: none; font-weight: 600;">官方 LINE：{{ brand.line_id }}</a>{% endif %}
+                    </p>
+                    <div style="background: rgba(231,76,60,0.12); border: 1px solid rgba(231,76,60,0.35); border-left: 3px solid #e74c3c; border-radius: 8px; padding: 12px 14px; margin-top: 14px;">
+                        <div style="color: #e74c3c; font-size: 13px; font-weight: 700; margin-bottom: 4px;">💰 代付／代收貨款包裹</div>
+                        <div style="color: #ddd; font-size: 12px; line-height: 1.7;">
+                            若包裹需代付款（代引き／著払い／代金引換），請<strong style="color:#f39c12;">先私訊客服</strong>安排代付款項，否則倉庫將<strong style="color:#e74c3c;">拒收包裹</strong>。
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📝 預報商品</div>
+                    <p style="font-size:13px;color:#888;margin-bottom:16px;">請填寫您寄來的商品資訊，方便我們入庫登記。<span style="color:#f39c12;">金額請填「單件單價」，不要填總價。</span></p>
+                    <div id="forecastItemsContainer">
+                        <div class="item-row forecast-item-row">
+                            <div class="form-group col-name"><label>品名 *</label><input type="text" class="form-control fc-name" placeholder="商品名稱"></div>
+                            <div class="form-group col-qty"><label>數量 *</label><input type="number" class="form-control fc-qty" value="1" min="1"></div>
+                            <div class="form-group col-price"><label>單價(日圓)</label><input type="number" class="form-control fc-price" value="0" min="0" placeholder="每件單價"></div>
+                            <div class="form-group col-url"><label>商品連結</label><input type="text" class="form-control fc-url" placeholder="https://..."></div>
+                            <div class="col-action"><label>&nbsp;</label><button class="btn btn-danger" onclick="removeFcItem(this)">✕</button></div>
+                        </div>
+                    </div>
+                    <div class="add-item-btn" onclick="addFcItem()">➕ 新增一筆商品</div>
+                    <div class="form-group" style="margin-top:16px;">
+                        <label>備註（選填）</label>
+                        <input type="text" id="fcNote" class="form-control" placeholder="例：易碎品請加固、合箱出貨等">
+                    </div>
+                    <button class="btn btn-primary btn-block" style="padding: 16px;" onclick="submitForecastSimple()">📦 提交預報</button>
+                </div>
+
+                <!-- 預報記錄 -->
+                <div class="card" id="forecastHistoryCard" style="display:none;">
+                    <div class="card-title">📋 我的預報記錄</div>
+                    <div id="forecastHistoryList"></div>
+                </div>
+            </div>
+
+            <!-- 我的包裹 -->
+            <div class="tab-content" id="tab-packages">
+                <div class="card">
+                    <div class="list-header">
+                        <h3>📦 我的包裹</h3>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <button class="btn btn-secondary" id="selectAllPkgBtn" onclick="toggleSelectAllPkg()" style="padding:10px 16px;font-size:13px;">☑ 全選</button>
+                            <button class="btn btn-primary" id="shipRequestBtn" onclick="submitShipRequest()" style="display:none;padding:10px 20px;">
+                                🚚 申請出貨 (<span id="shipRequestCount">0</span>)
+                            </button>
+                            <button class="btn btn-secondary" onclick="loadPackages()">🔄 重新整理</button>
+                        </div>
+                    </div>
+                    <div id="packagesList"><div class="empty-state"><div class="icon">📭</div><p>尚無包裹記錄</p></div></div>
+                </div>
+            </div>
+
+            <!-- 運單查詢 -->
+            <div class="tab-content" id="tab-orders">
+                <!-- 出貨申請記錄 -->
+                <div class="card" id="shipRequestsCard" style="display:none;">
+                    <div class="list-header">
+                        <h3>📋 我的出貨申請</h3>
+                    </div>
+                    <div id="shipRequestsList"></div>
+                </div>
+            </div>
+
+            <!-- 無主包裹認領牆 -->
+            <div class="tab-content" id="tab-unclaimed">
+                <div class="card">
+                    <div class="list-header">
+                        <h3>🔍 無主包裹認領牆</h3>
+                        <button class="btn btn-secondary" onclick="loadUnclaimed()">🔄 重新整理</button>
+                    </div>
+                    <div style="background:rgba(230,126,34,0.08);border:1px solid rgba(230,126,34,0.25);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#ccc;line-height:1.8;">
+                        以下包裹<strong style="color:#e67e22;">沒有寫客編</strong>或姓名無法辨識，倉庫暫時無法歸戶。<br>
+                        看到疑似自己的包裹，請按「🙋 這是我的」提出認領申請，倉庫核對後會轉入你的「我的包裹」，
+                        <strong style="color:#f39c12;">並保留原始到倉日</strong>，不會多算你的等待天數。<br>
+                        <span style="color:#e74c3c;">⚠️ 為保護客戶隱私，這裡不顯示收件人姓名，單號只顯示末四碼。認不出來的話，請帶著寄件資訊聯繫客服。</span>
+                    </div>
+                    <div id="unclaimedList"><div class="empty-state"><div class="icon">📭</div><p>載入中...</p></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 公告 Modal -->
+    <div id="announcementModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1100;justify-content:center;align-items:center;">
+        <div style="background:#1a1a2e;border:1px solid rgba(243,156,18,.3);border-radius:14px;padding:28px;width:92%;max-width:480px;max-height:80vh;overflow-y:auto;">
+            <div style="text-align:center;margin-bottom:16px;">
+                <div style="font-size:28px;">📢</div>
+                <h3 style="font-size:18px;font-weight:700;color:#f39c12;">最新公告</h3>
+            </div>
+            <div id="announcementContent"></div>
+            <button onclick="closeAnnouncementModal()" style="display:block;width:100%;margin-top:18px;padding:14px;background:linear-gradient(135deg,#f39c12,#e67e22);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">我知道了 ✓</button>
+        </div>
+    </div>
+
+    <!-- 地址簿 Modal -->
+    <div id="addressBookModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;justify-content:center;align-items:flex-start;padding-top:60px;">
+        <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:24px;width:92%;max-width:520px;max-height:80vh;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h3 style="font-size:16px;font-weight:700;">📒 我的地址簿</h3>
+                <button onclick="closeAddressBook()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">✕</button>
+            </div>
+            <div id="addressList"></div>
+            <!-- 新增地址表單 -->
+            <div style="margin-top:16px;padding:16px;background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.15);border-radius:10px;">
+                <div style="font-size:13px;font-weight:600;color:#f39c12;margin-bottom:12px;">➕ 新增地址</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div><label style="font-size:11px;color:#888;">標籤（選填）</label><input type="text" id="addr-label" class="form-control" placeholder="例：家、公司" style="padding:8px 10px;font-size:13px;"></div>
+                    <div><label style="font-size:11px;color:#888;">收件人 *</label><input type="text" id="addr-recipient" class="form-control" placeholder="姓名" style="padding:8px 10px;font-size:13px;"></div>
+                    <div><label style="font-size:11px;color:#888;">電話 *</label><input type="text" id="addr-phone" class="form-control" placeholder="手機號碼" style="padding:8px 10px;font-size:13px;"></div>
+                    <div><label style="font-size:11px;color:#888;">郵遞區號</label><input type="text" id="addr-zip" class="form-control" placeholder="選填" style="padding:8px 10px;font-size:13px;"></div>
+                </div>
+                <div style="margin-top:10px;"><label style="font-size:11px;color:#888;">地址 *</label><input type="text" id="addr-address" class="form-control" placeholder="完整地址" style="padding:8px 10px;font-size:13px;"></div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+                    <input type="checkbox" id="addr-default" style="accent-color:#f39c12;width:16px;height:16px;">
+                    <label for="addr-default" style="font-size:12px;color:#ccc;">設為預設地址</label>
+                    <button onclick="saveNewAddress()" style="margin-left:auto;padding:8px 20px;background:linear-gradient(135deg,#f39c12,#e67e22);border:none;border-radius:6px;color:#fff;font-weight:600;font-size:13px;cursor:pointer;">儲存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 申報人管理 Modal（報單收貨人／納稅義務人，與地址簿無關）-->
+    <div id="declarantModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;justify-content:center;align-items:flex-start;padding-top:60px;">
+        <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:24px;width:92%;max-width:520px;max-height:80vh;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h3 style="font-size:16px;font-weight:700;">🧾 我的申報人</h3>
+                <button onclick="closeDeclarants()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">✕</button>
+            </div>
+            <div style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.25);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#ddd;line-height:1.9;">
+                申報人＝報單上的納稅義務人。海關的稅單、EZ WAY 的確認推播都會發給他，並占用他的半年進口次數。<br>
+                電話必須是該申報人本人 EZ WAY 實名認證綁定的手機門號，填錯將收不到推播、包裹會卡關。<br>
+                自 2026/03/01 起，每位申報人都必須自己在 EZ WAY 按下「申報相符」，該箱才能放行。<br>
+                <span style="color:#e74c3c;">本欄不需要、也請勿提供身分證字號。</span>
+            </div>
+            <div id="declarantList"></div>
+            <div style="margin-top:16px;padding:16px;background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.15);border-radius:10px;">
+                <div style="font-size:13px;font-weight:600;color:#f39c12;margin-bottom:12px;">➕ 新增申報人</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div><label style="font-size:11px;color:#888;">申報人姓名 *</label><input type="text" id="dec-name" class="form-control" placeholder="與 EZ WAY 帳號相同的姓名" style="padding:8px 10px;font-size:13px;"></div>
+                    <div><label style="font-size:11px;color:#888;">EZ WAY 綁定手機 *</label><input type="text" id="dec-phone" class="form-control" placeholder="09xxxxxxxx，須為此人 EZ WAY 實名認證的門號" style="padding:8px 10px;font-size:13px;"></div>
+                </div>
+                <div style="margin-top:10px;"><label style="font-size:11px;color:#888;">申報人地址 *</label><input type="text" id="dec-address" class="form-control" placeholder="完整地址" style="padding:8px 10px;font-size:13px;"></div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+                    <input type="checkbox" id="dec-default" style="accent-color:#f39c12;width:16px;height:16px;">
+                    <label for="dec-default" style="font-size:12px;color:#ccc;">設為預設申報人</label>
+                    <button onclick="saveNewDeclarant()" style="margin-left:auto;padding:8px 20px;background:linear-gradient(135deg,#f39c12,#e67e22);border:none;border-radius:6px;color:#fff;font-weight:600;font-size:13px;cursor:pointer;">儲存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 出貨地址選擇 Modal -->
+    <div id="shipAddressModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1001;justify-content:center;align-items:flex-start;padding-top:80px;">
+        <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:24px;width:92%;max-width:480px;max-height:75vh;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h3 style="font-size:16px;font-weight:700;">📦 選擇寄送地址</h3>
+                <button onclick="closeShipAddressModal()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">✕</button>
+            </div>
+            <div id="shipAddressList"></div>
+            <!-- 加值服務選取（可選，送出後為「申請」，實際費用以管理員帳單為準）-->
+            <div style="margin-top:16px;">
+                <div style="font-size:13px;font-weight:700;color:#9b59b6;margin-bottom:4px;">⭐ 加值服務（選填）</div>
+                <div style="font-size:11px;color:#888;margin-bottom:8px;">勾選你需要的服務，這是「申請」，實際費用會由客服在帳單確認。</div>
+                <div id="shipServicesList" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+                    <div style="color:#666;font-size:12px;text-align:center;padding:10px;">載入中…</div>
+                </div>
+                <div id="shipServicesTotal" style="text-align:right;font-size:12px;color:#9b59b6;font-weight:600;margin-top:6px;display:none;"></div>
+            </div>
+            <!-- 本次申報人（報單收貨人／納稅義務人，一箱一位）-->
+            <div style="margin-top:16px;">
+                <div style="font-size:13px;font-weight:700;color:#e67e22;margin-bottom:4px;">🧾 本次申報人</div>
+                <div style="font-size:11px;color:#888;margin-bottom:8px;line-height:1.8;">
+                    申報人＝報單上的納稅義務人，海關稅單與 EZ WAY 推播都會發給他，並占用他的半年進口次數。<br>
+                    台灣快遞進口一箱一份申報單，勾多位時我們會依箱數分配。
+                </div>
+                <div id="shipDeclarantList" style="max-height:190px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+                    <div style="color:#666;font-size:12px;text-align:center;padding:10px;">載入中…</div>
+                </div>
+                <div id="shipDeclarantHint" style="font-size:11px;color:#e67e22;margin-top:6px;display:none;"></div>
+                <label id="shipDeclarantConsentRow" style="display:none;align-items:flex-start;gap:8px;margin-top:10px;cursor:pointer;">
+                    <input type="checkbox" id="shipDeclarantConsent" style="accent-color:#f39c12;width:16px;height:16px;margin-top:2px;flex-shrink:0;">
+                    <span style="font-size:12px;color:#ccc;line-height:1.7;">我確認以上申報人皆為本人或已取得其同意，且各自已完成 EZ WAY 實名認證。</span>
+                </label>
+            </div>
+            <div class="form-group" style="margin-top:14px;">
+                <label style="font-size:12px;color:#888;">備註（選填）</label>
+                <input type="text" id="shipNote" class="form-control" placeholder="例：合箱出貨、請儘快" style="padding:8px 10px;font-size:13px;">
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+                <button onclick="closeShipAddressModal()" class="btn btn-secondary" style="padding:10px 18px;">取消</button>
+                <button onclick="confirmShipRequest()" class="btn btn-primary" style="padding:10px 24px;">🚚 確認出貨</button>
+            </div>
+        </div>
+    </div>
+
+    <footer style="text-align: center; padding: 30px 20px; color: #555; font-size: 12px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 40px;">
+        © {{ brand.company }} All Rights Reserved.
+    </footer>
+
+    <script>
+        let currentCustomer = null;
+        let currentBranding = null;
+
+        // ── 客戶端 API 統一入口：攔 401 / need_login（伺服器端 session 過期）──
+        //    客戶端 API 現在都綁 Flask session（見 app.py _require_customer），
+        //    session 掉了就把前端登入狀態一起清掉，不要讓畫面停在「已登入」的假象。
+        let _suppressToastUntil = 0;
+
+        async function apiFetch(url, opts) {
+            const res = await fetch(url, opts);
+            if (res.status === 401) {
+                let body = null;
+                try { body = await res.clone().json(); } catch (e) {}
+                if (!body || body.need_login) handleSessionExpired();
+            }
+            return res;
+        }
+
+        function handleSessionExpired() {
+            if (Date.now() < _suppressToastUntil) return;   // 同一波多支 API 只提示一次
+            showToast('登入階段已過期，請重新登入', 'error');
+            _suppressToastUntil = Date.now() + 2000;        // 壓掉各處 catch 疊上來的「網路錯誤」
+            logout();
+        }
+
+        function toggleCollapse(el) {
+            el.classList.toggle('open');
+            el.nextElementSibling.classList.toggle('open');
+        }
+
+        // ===== 代理品牌套用（referral URL + 登入後）=====
+        function applyBranding(b) {
+            if (!b) return;
+            currentBranding = b;
+            try {
+                // 1) 頁面標題、banner
+                document.title = (b.display_name || document.body.dataset.brandName) + ' - 集運';
+                var bb = document.getElementById('banner-brand-name');
+                if (bb) bb.textContent = (b.display_name || document.body.dataset.brandName) + ' 集運';
+                // 限時特價徽章：
+                //  - FWT JAPAN 預設頁不顯示徽章（收費表已改為 _pricing.html）
+                //  - 代理 referral 頁有設 promo_text → 顯示該代理自設的
+                //  - 代理沒設 → 隱藏
+                var promo = document.getElementById('promo-badge');
+                var promoText = document.getElementById('promo-badge-text');
+                var promoPrice = document.getElementById('promo-badge-price');
+                // 日幣自動換算：從徽章的 NT$ 價抓數字 × 匯率，四捨五入到整數。改單價時日幣自動跟著。
+                var TWD_TO_JPY = 5.0;  // 台幣→日幣參考匯率（要調匯率改這裡）
+                function syncPromoYen() {
+                    var yenEl = document.getElementById('promo-yen');
+                    if (!yenEl || !promoPrice) return;
+                    var m = (promoPrice.textContent || '').replace(/,/g, '').match(/(\d+(?:\.\d+)?)/);
+                    if (!m) { yenEl.style.display = 'none'; return; }
+                    var yen = Math.round(parseFloat(m[1]) * TWD_TO_JPY);
+                    yenEl.textContent = '約日幣 ' + yen.toLocaleString() + ' 円';
+                    yenEl.style.display = '';
+                }
+                if (promo && promoText && promoPrice) {
+                    if (b.is_agent) {
+                        if (b.promo_text || b.promo_price) {
+                            promoText.textContent = b.promo_text || '';
+                            promoPrice.textContent = b.promo_price || '';
+                            promo.style.display = 'inline-block';
+                        } else {
+                            promo.style.display = 'none';
+                        }
+                    } else {
+                        promo.style.display = 'none';
+                    }
+                    syncPromoYen();  // 依徽章價格自動更新日幣
+                }
+
+                // 2) 申請會員指引：有 signup_guide → 換成代理版本
+                var siDefault = document.getElementById('signup-instruction-default');
+                var siAgent = document.getElementById('signup-instruction-agent');
+                if (b.is_agent && (b.signup_guide || b.contact_line)) {
+                    var guideHtml = '';
+                    if (b.signup_guide) {
+                        // 簡單把換行轉 <br>，避免 XSS 風險先 escape
+                        var esc = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+                        guideHtml += '<p>' + esc(b.signup_guide).replace(/\n/g, '<br>') + '</p>';
+                    } else {
+                        guideHtml += '<p>請聯絡您的代理「' + (b.display_name || '') + '」申請會員。</p>';
+                    }
+                    if (b.contact_line) {
+                        var lineUrl = b.contact_line.indexOf('http') === 0 ? b.contact_line : ('https://line.me/R/ti/p/' + encodeURIComponent(b.contact_line));
+                        guideHtml += '<a href="' + lineUrl + '" target="_blank" class="line-link">'
+                                  + '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.82 2 10.5c0 2.55 1.25 4.83 3.21 6.41-.12.44-.78 2.82-.81 3.04-.05.32.12.63.42.76.1.04.21.06.31.06.21 0 .41-.08.56-.24l3.37-2.47c.95.15 1.93.23 2.94.23 5.52 0 10-3.82 10-8.5S17.52 2 12 2z"/></svg>'
+                                  + '聯絡客服 LINE</a>';
+                    }
+                    if (siAgent) { siAgent.innerHTML = guideHtml; siAgent.style.display = 'block'; }
+                    if (siDefault) siDefault.style.display = 'none';
+                } else if (!b.is_agent) {
+                    // 一般訪客（你的）→ 顯示預設
+                    if (siAgent) siAgent.style.display = 'none';
+                    if (siDefault) siDefault.style.display = 'block';
+                }
+
+                // 3) 貨物保障 保險區塊
+                var sections = document.querySelectorAll('.insurance-section');
+                sections.forEach(function(sec){
+                    var def = sec.querySelector('.insurance-default');
+                    var agent = sec.querySelector('.insurance-agent');
+                    if (b.is_agent) {
+                        if (b.insurance_url) {
+                            if (def) def.style.display = 'none';
+                            if (agent) {
+                                agent.style.display = '';
+                                var titleEl = agent.querySelector('.insurance-agent-title');
+                                var descEl = agent.querySelector('.insurance-agent-desc');
+                                var linkEl = agent.querySelector('.insurance-agent-link');
+                                if (titleEl) titleEl.textContent = '✅ ' + (b.display_name || '') + (b.insurance_label || ' 貨物保險');
+                                if (descEl && b.insurance_desc) descEl.textContent = b.insurance_desc;
+                                if (linkEl) {
+                                    linkEl.href = b.insurance_url;
+                                    linkEl.textContent = '🛒 ' + (b.insurance_label || '立即加購保險') + ' →';
+                                }
+                            }
+                        } else {
+                            // 代理沒設保險連結 → 整個區塊隱藏
+                            sec.style.display = 'none';
+                        }
+                    } else {
+                        // 預設（FWT JAPAN）
+                        if (def) def.style.display = '';
+                        if (agent) agent.style.display = 'none';
+                        sec.style.display = '';
+                    }
+                });
+
+                // 4) warehouse-box 內的「官方 LINE」連結（集運介紹 + 預報包裹 兩個 tab）
+                var lineLinks = document.querySelectorAll('.warehouse-line-link');
+                if (b.is_agent && b.contact_line) {
+                    var rawLine = String(b.contact_line).trim();
+                    var lineUrl = rawLine.indexOf('http') === 0
+                        ? rawLine
+                        : ('https://line.me/R/ti/p/' + encodeURIComponent(rawLine));
+                    // 顯示文字：@xxx 格式 → 「官方 LINE：@xxx」；網址格式 → 「聯絡客服 LINE」
+                    var lineDisplay = rawLine.indexOf('@') === 0
+                        ? '官方 LINE：' + rawLine
+                        : '聯絡客服 LINE';
+                    lineLinks.forEach(function(a){
+                        a.href = lineUrl;
+                        a.textContent = lineDisplay;
+                    });
+                } else if (!b.is_agent) {
+                    // 還原為預設（情境：訪客先打開代理連結 → 登入主帳號的 G 客戶）
+                    lineLinks.forEach(function(a){
+                        a.href = document.body.dataset.lineUrl;
+                        a.textContent = '官方 LINE：' + document.body.dataset.lineId;
+                    });
+                }
+                // 若 b.is_agent 但代理沒設 contact_line → 保持預設的官方 LINE（fallback 到主帳號客服）
+            } catch(e) { console.warn('applyBranding error:', e); }
+        }
+
+        // 頁面載入：讀 ?a=PREFIX 套用代理品牌
+        (async function loadInitialBranding() {
+            try {
+                var params = new URLSearchParams(window.location.search);
+                var ref = params.get('a') || '';
+                if (!ref) return;  // 一般訪客
+                var res = await apiFetch('/api/branding?a=' + encodeURIComponent(ref));
+                var b = await res.json();
+                if (b && b.success && b.is_agent) applyBranding(b);
+            } catch(e) { /* 靜默失敗 */ }
+        })();
+
+        // 加值服務費用表：動態讀目錄（登入前/後兩張表都吃同一份資料 → 永遠與後台一致）
+        var _paidCatBadge = { '申報':'cat-declare','加固':'cat-packing','資材':'cat-material','操作':'cat-operation','拍照':'cat-photo','運費':'cat-other','其他':'cat-other' };
+        function _paidEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        async function loadPaidServicesInfo() {
+            var bodies = document.querySelectorAll('.paid-services-body');
+            if (!bodies.length) return;
+            try {
+                var res = await apiFetch('/api/extra_services/catalog?full=1');
+                var data = await res.json();
+                var svc = (data.success && data.services) ? data.services : [];
+                var html = svc.map(function(s){
+                    var badge = _paidCatBadge[s.cat] || 'cat-other';
+                    var variable = /起|變動|～|~|材積|實際/.test(s.desc || '');
+                    var priceTxt = (s.price > 1)
+                        ? ('NT$' + s.price + (variable ? ' 起' : ''))
+                        : (variable ? '依材積/實際' : ('NT$' + s.price));
+                    return '<tr><td><span class="category-label ' + badge + '">' + _paidEsc(s.cat||'其他') + '</span>'
+                        + '<div class="service-name">' + _paidEsc(s.name) + '</div></td>'
+                        + '<td><span class="service-desc">' + _paidEsc(s.desc) + '</span></td>'
+                        + '<td class="price-cell" style="text-align:right">' + priceTxt + '</td></tr>';
+                }).join('');
+                bodies.forEach(function(b){
+                    b.innerHTML = html || '<tr><td colspan="3" style="text-align:center;color:#888;padding:16px;">目前沒有加值服務</td></tr>';
+                });
+            } catch(e) {
+                bodies.forEach(function(b){
+                    b.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#888;padding:16px;">加值服務載入失敗</td></tr>';
+                });
+            }
+        }
+        loadPaidServicesInfo();
+
+        // 運費試算（客戶端）：只算實際重量、不算材積；費率取自頁面 data-rate
+        function _volRound(raw){ return Math.max(2.0, Math.ceil((raw/0.5) - 1e-9) * 0.5); }
+        function calcVolumetric(el){
+            var box = el.closest('.vol-calc'); if (!box) return;
+            var wt = parseFloat(box.querySelector('.vol-wt').value) || 0;
+            var out = box.querySelector('.vol-result');
+            if (!(wt > 0)) {
+                out.style.color = '#888';
+                out.innerHTML = '輸入實際重量即可試算運費';
+                return;
+            }
+            var rate = parseFloat(document.body.dataset.rate) || 0;
+            var billed = _volRound(wt);
+            out.style.color = '#ddd';
+            out.innerHTML = '計費重量：<strong style="color:#f39c12;font-size:16px;">' + billed + ' kg</strong>（' + wt + ' kg 進位）<br>'
+                + '👉 運費約 <strong style="color:#f39c12;font-size:16px;">NT$' + Math.round(billed * rate).toLocaleString() + '</strong>';
+        }
+
+        async function login() {
+            let gCode = document.getElementById('customerId').value.trim().toUpperCase();
+            let password = document.getElementById('password').value.trim();
+            if (!gCode) { showToast('請輸入會員編號', 'error'); return; }
+            if (!password) { showToast('請輸入密碼', 'error'); return; }
+            // 沒有英文前綴 → 預設加 G（你的客戶）；有 A/B/C... 等代理前綴維持原樣
+            if (gCode && !/^[A-Z]/.test(gCode)) gCode = 'G' + gCode;
+
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.textContent = '登入中...';
+
+            try {
+                const res = await apiFetch('/api/verify_customer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customer_id: gCode, password: password })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    currentCustomer = result.customer;
+                    // 登入後依該客戶所屬代理套用品牌（覆蓋未登入時 URL 參數套的）
+                    if (currentCustomer.branding) applyBranding(currentCustomer.branding);
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('mainContent').classList.add('active');
+                    document.getElementById('userName').textContent = currentCustomer.name || '會員';
+                    document.getElementById('userIdDisplay').textContent = currentCustomer.g_code;
+                    document.querySelectorAll('.member-code-placeholder').forEach(el => { el.textContent = currentCustomer.g_code; });
+
+                    // 顯示電話和地址
+                    const phone = currentCustomer.phone_raw || currentCustomer.phone || '';
+                    const addr = currentCustomer.address || '';
+                    if (phone || addr) {
+                        document.getElementById('userPhone').textContent = phone ? '📞 ' + phone : '';
+                        document.getElementById('userAddress').textContent = addr ? '📍 ' + addr : '';
+                        document.getElementById('userContactInfo').style.display = 'block';
+                    }
+
+                    // 顯示運費：台幣為主，日幣為輔
+                    const rateTwd = currentCustomer.shipping_rate_twd;
+                    const rateJpy = currentCustomer.shipping_rate_jpy;
+                    if (rateTwd && rateTwd > 0) {
+                        document.getElementById('userShippingRateTwd').textContent = rateTwd.toLocaleString();
+                        document.getElementById('userShippingRateJpy').textContent = rateJpy.toLocaleString();
+                        document.getElementById('shippingRateDisplay').style.display = 'block';
+                    }
+
+                    addFcItem_init();
+                    localStorage.setItem('gCode', currentCustomer.g_code);
+                    updateCustomerBadges();
+                    setInterval(updateCustomerBadges, 30000);
+                    checkAnnouncements();
+                    showToast('登入成功！', 'success');
+                } else if (result.disabled) {
+                    // 帳號已停用 → 整頁只顯示停用訊息
+                    document.body.innerHTML =
+                        '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:#0f1419;color:#fff;font-family:inherit;">'
+                        + '<div style="font-size:64px;margin-bottom:20px;">🚫</div>'
+                        + '<div style="font-size:22px;font-weight:700;margin-bottom:12px;">您的帳號已停用</div>'
+                        + '<div style="font-size:16px;color:#f39c12;">請聯繫客服</div>'
+                        + '</div>';
+                } else {
+                    showToast(result.error || '登入失敗', 'error');
+                    btn.disabled = false;
+                    btn.textContent = '登入';
+                }
+            } catch (e) {
+                showToast('網路錯誤，請稍後再試', 'error');
+                btn.disabled = false;
+                btn.textContent = '登入';
+            }
+        }
+
+        function logout() {
+            try { window.fetch('/api/customer_logout', { method: 'POST' }); } catch (e) {}
+            currentCustomer = null;
+            localStorage.removeItem('gCode');
+            document.getElementById('loginSection').style.display = '';
+            document.getElementById('mainContent').classList.remove('active');
+            document.getElementById('customerId').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('shippingRateDisplay').style.display = 'none';
+            document.getElementById('userContactInfo').style.display = 'none';
+            document.querySelectorAll('.member-code-placeholder').forEach(el => { el.textContent = '會員編號'; });
+            document.getElementById('badge-packages').style.display = 'none';
+            document.getElementById('badge-orders').style.display = 'none';
+            document.getElementById('badge-forecast').style.display = 'none';
+            document.getElementById('badge-unclaimed').style.display = 'none';
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            if (tab === 'packages') loadPackages();
+            if (tab === 'orders') loadShipRequests();
+            if (tab === 'forecast') loadForecastHistory();
+            if (tab === 'unclaimed') loadUnclaimed();
+        }
+
+        function addFcItem_init() {
+            // 初始化：確保至少有一行（已在 HTML 中）
+        }
+
+        function addFcItem() {
+            document.getElementById('forecastItemsContainer').insertAdjacentHTML('beforeend', `
+                <div class="item-row forecast-item-row">
+                    <div class="form-group col-name"><input type="text" class="form-control fc-name" placeholder="商品名稱"></div>
+                    <div class="form-group col-qty"><input type="number" class="form-control fc-qty" value="1" min="1"></div>
+                    <div class="form-group col-price"><input type="number" class="form-control fc-price" value="0" min="0" placeholder="每件單價"></div>
+                    <div class="form-group col-url"><input type="text" class="form-control fc-url" placeholder="https://..."></div>
+                    <div class="col-action"><button class="btn btn-danger" onclick="removeFcItem(this)">✕</button></div>
+                </div>
+            `);
+        }
+
+        function removeFcItem(btn) {
+            const rows = document.querySelectorAll('.forecast-item-row');
+            if (rows.length <= 1) { showToast('至少保留一筆', 'error'); return; }
+            btn.closest('.item-row').remove();
+        }
+
+        async function submitForecastSimple() {
+            const items = [];
+            document.querySelectorAll('.forecast-item-row').forEach(row => {
+                const name = (row.querySelector('.fc-name')?.value || '').trim();
+                if (name) {
+                    items.push({
+                        name: name,
+                        quantity: parseInt(row.querySelector('.fc-qty')?.value) || 1,
+                        price: parseInt(row.querySelector('.fc-price')?.value) || 0,
+                        url: (row.querySelector('.fc-url')?.value || '').trim()
+                    });
+                }
+            });
+            if (!items.length) { showToast('請至少填寫一個商品名稱', 'error'); return; }
+            const note = document.getElementById('fcNote').value.trim();
+            try {
+                const res = await apiFetch('/api/forecast_simple', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        g_code: currentCustomer.g_code,
+                        customer_name: currentCustomer.name,
+                        items: items,
+                        note: note
+                    })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showToast('✅ ' + result.message, 'success');
+                    // 清空表單
+                    document.getElementById('forecastItemsContainer').innerHTML = `
+                        <div class="item-row forecast-item-row">
+                            <div class="form-group col-name"><label>品名 *</label><input type="text" class="form-control fc-name" placeholder="商品名稱"></div>
+                            <div class="form-group col-qty"><label>數量 *</label><input type="number" class="form-control fc-qty" value="1" min="1"></div>
+                            <div class="form-group col-price"><label>單價(日圓)</label><input type="number" class="form-control fc-price" value="0" min="0" placeholder="每件單價"></div>
+                            <div class="form-group col-url"><label>商品連結</label><input type="text" class="form-control fc-url" placeholder="https://..."></div>
+                            <div class="col-action"><label>&nbsp;</label><button class="btn btn-danger" onclick="removeFcItem(this)">✕</button></div>
+                        </div>`;
+                    document.getElementById('fcNote').value = '';
+                    loadForecastHistory();
+                } else {
+                    showToast('❌ ' + (result.error || '提交失敗'), 'error');
+                }
+            } catch(e) { showToast('網路錯誤', 'error'); }
+        }
+
+        async function loadForecastHistory() {
+            if (!currentCustomer) return;
+            try {
+                const res = await apiFetch(`/api/my_forecasts?g_code=${currentCustomer.g_code}`);
+                const result = await res.json();
+                const card = document.getElementById('forecastHistoryCard');
+                const container = document.getElementById('forecastHistoryList');
+                if (result.success && result.forecasts && result.forecasts.length > 0) {
+                    card.style.display = 'block';
+                    container.innerHTML = result.forecasts.map(fc => {
+                        const statusColors = {'待處理':'#f39c12','已處理':'#27ae60'};
+                        const c = statusColors[fc.status] || '#888';
+                        const itemsSummary = (fc.items || []).map(i => `${i.name} ×${i.quantity}`).join('、');
+                        return `<div class="package-item" style="grid-template-columns: 1fr 2fr 1fr;">
+                            <div><div class="label">提交時間</div><div class="value" style="font-size:12px;">${fc.created_at}</div></div>
+                            <div><div class="label">商品</div><div class="value" style="font-size:12px;">${itemsSummary}</div></div>
+                            <div><div class="label">狀態</div><div class="value"><span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;background:${c}22;color:${c};">${fc.status}</span></div></div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    card.style.display = 'none';
+                }
+            } catch(e) {}
+        }
+
+        async function loadPackages() {
+            if (!currentCustomer) return;
+            try {
+                const res = await apiFetch(`/api/packages?g_code=${currentCustomer.g_code}`);
+                const result = await res.json();
+                const container = document.getElementById('packagesList');
+                if (result.success && result.packages && result.packages.length > 0) {
+                    container.innerHTML = result.packages.map(pkg => {
+                        // 已申請出貨待處理中 → 不能再勾選
+                        const isPendingShip = !!pkg.pending_ship_request_id;
+                        const canSelect = (pkg.status === '已到貨' || pkg.status === '已入庫') && !isPendingShip;
+                        const pendingBadge = isPendingShip
+                            ? `<div style="position:absolute;right:8px;top:8px;background:#3498db;color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:12px;box-shadow:0 2px 6px rgba(52,152,219,0.4);">🚚 已申請出貨</div>`
+                            : '';
+                        const dimStyle = isPendingShip ? 'opacity:0.55;' : '';
+                        return `
+                        <div class="package-item" style="position:relative;${dimStyle}">
+                            ${pendingBadge}
+                            ${canSelect ? `<div style="position:absolute;left:8px;top:50%;transform:translateY(-50%);"><input type="checkbox" class="ship-chk" value="${pkg.id}" data-name="${pkg.product_name||''}" data-weight="${pkg.weight||''}" onchange="updateShipRequestBtn()" style="width:18px;height:18px;accent-color:#f39c12;cursor:pointer;"></div>` : ''}
+                            <div style="${canSelect ? 'padding-left:20px;' : ''}"><div class="label">末四碼</div><div class="value" style="font-size:13px;">${pkg.logis_num || '-'}</div></div>
+                            <div><div class="label">寄送者</div><div class="value">${pkg.product_name || '-'}</div></div>
+                            <div><div class="label">重量</div><div class="value">${pkg.weight ? pkg.weight + ' kg' : '待秤重'}</div></div>
+                            <div><div class="label">狀態</div><div class="value"><span class="status-badge ${getStatusClass(pkg.status)}">${pkg.status || '待入庫'}</span></div></div>
+                            <div><div class="label">到貨日期</div><div class="value">${pkg.in_date || '-'}</div></div>
+                        </div>
+                        ${pkg.note ? `<div style="margin: -6px 0 10px 0; padding: 8px 14px; background:rgba(255,255,255,0.03); border-radius:8px; font-size:12px; color:#888;">📝 ${pkg.note}</div>` : ''}
+                    `}).join('');
+                } else { container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>尚無包裹記錄</p></div>'; }
+                updateShipRequestBtn();
+            } catch (e) { showToast('載入失敗', 'error'); }
+        }
+
+        function updateShipRequestBtn() {
+            const checked = document.querySelectorAll('.ship-chk:checked');
+            const all = document.querySelectorAll('.ship-chk');
+            const btn = document.getElementById('shipRequestBtn');
+            const selBtn = document.getElementById('selectAllPkgBtn');
+            document.getElementById('shipRequestCount').textContent = checked.length;
+            btn.style.display = checked.length > 0 ? 'inline-flex' : 'none';
+            if (all.length > 0) {
+                selBtn.style.display = 'inline-flex';
+                selBtn.textContent = checked.length === all.length ? '☐ 取消全選' : '☑ 全選';
+            } else {
+                selBtn.style.display = 'none';
+            }
+        }
+
+        function toggleSelectAllPkg() {
+            const all = document.querySelectorAll('.ship-chk');
+            const checked = document.querySelectorAll('.ship-chk:checked');
+            const shouldCheck = checked.length < all.length;
+            all.forEach(c => c.checked = shouldCheck);
+            updateShipRequestBtn();
+        }
+
+        let pendingShipIds = [];
+
+        function submitShipRequest() {
+            const checked = [...document.querySelectorAll('.ship-chk:checked')];
+            if (!checked.length) return;
+            pendingShipIds = checked.map(c => parseInt(c.value));
+            openShipAddressModal();
+        }
+
+        // ── 地址簿 ──
+        function openAddressBook() {
+            document.getElementById('addressBookModal').style.display = 'flex';
+            loadAddresses();
+        }
+        function closeAddressBook() {
+            document.getElementById('addressBookModal').style.display = 'none';
+        }
+
+        async function loadAddresses() {
+            if (!currentCustomer) return;
+            try {
+                const res = await apiFetch(`/api/addresses?g_code=${currentCustomer.g_code}`);
+                const data = await res.json();
+                const container = document.getElementById('addressList');
+                if (data.success && data.addresses.length > 0) {
+                    container.innerHTML = data.addresses.map(a => `
+                        <div style="padding:12px;background:rgba(0,0,0,.2);border:1px solid ${a.is_default ? 'rgba(243,156,18,.4)' : 'rgba(255,255,255,.08)'};border-radius:8px;margin-bottom:8px;">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                                <div>
+                                    ${a.is_default ? '<span style="font-size:10px;padding:2px 8px;background:rgba(243,156,18,.2);color:#f39c12;border-radius:8px;font-weight:600;">預設</span> ' : ''}
+                                    ${a.label ? '<span style="font-size:12px;color:#3498db;font-weight:600;">'+a.label+'</span> ' : ''}
+                                    <strong style="color:#fff;">${a.recipient}</strong>
+                                    <span style="color:#888;font-size:12px;margin-left:6px;">${a.phone}</span>
+                                </div>
+                                <div style="display:flex;gap:4px;">
+                                    ${!a.is_default ? '<button onclick="setDefaultAddr('+a.id+')" style="background:rgba(243,156,18,.15);border:none;color:#f39c12;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">⭐ 預設</button>' : ''}
+                                    <button onclick="deleteAddr(${a.id})" style="background:rgba(231,76,60,.15);border:none;color:#e74c3c;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">🗑</button>
+                                </div>
+                            </div>
+                            <div style="font-size:12px;color:#aaa;margin-top:4px;">${a.zipcode ? a.zipcode+' ' : ''}${a.address}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div style="text-align:center;color:#666;padding:20px;">尚無地址，請新增</div>';
+                }
+            } catch(e) {}
+        }
+
+        async function saveNewAddress() {
+            const data = {
+                g_code: currentCustomer.g_code,
+                label: document.getElementById('addr-label').value.trim(),
+                recipient: document.getElementById('addr-recipient').value.trim(),
+                phone: document.getElementById('addr-phone').value.trim(),
+                zipcode: document.getElementById('addr-zip').value.trim(),
+                address: document.getElementById('addr-address').value.trim(),
+                is_default: document.getElementById('addr-default').checked
+            };
+            if (!data.recipient || !data.phone || !data.address) {
+                showToast('收件人、電話、地址為必填', 'error'); return;
+            }
+            try {
+                const res = await apiFetch('/api/addresses', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showToast('✅ 地址已新增', 'success');
+                    ['addr-label','addr-recipient','addr-phone','addr-zip','addr-address'].forEach(id => document.getElementById(id).value = '');
+                    document.getElementById('addr-default').checked = false;
+                    loadAddresses();
+                } else { showToast('❌ ' + (result.error || '新增失敗'), 'error'); }
+            } catch(e) { showToast('網路錯誤', 'error'); }
+        }
+
+        async function setDefaultAddr(id) {
+            try {
+                await apiFetch('/api/addresses/'+id+'/default', {
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({g_code: currentCustomer.g_code})
+                });
+                loadAddresses();
+                showToast('✅ 已設為預設', 'success');
+            } catch(e) {}
+        }
+
+        async function deleteAddr(id) {
+            if (!confirm('確定刪除此地址？')) return;
+            try {
+                await apiFetch('/api/addresses/'+id, {
+                    method:'DELETE', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({g_code: currentCustomer.g_code})
+                });
+                loadAddresses();
+                showToast('已刪除', 'success');
+            } catch(e) {}
+        }
+
+        // ── 申報人管理（報單收貨人／納稅義務人）──
+        function openDeclarants() {
+            document.getElementById('declarantModal').style.display = 'flex';
+            loadDeclarants();
+        }
+        function closeDeclarants() {
+            document.getElementById('declarantModal').style.display = 'none';
+        }
+
+        async function loadDeclarants() {
+            if (!currentCustomer) return;
+            try {
+                const res = await apiFetch(`/api/declarants?g_code=${currentCustomer.g_code}`);
+                const data = await res.json();
+                const container = document.getElementById('declarantList');
+                if (data.success && data.declarants.length > 0) {
+                    container.innerHTML = data.declarants.map(d => `
+                        <div style="padding:12px;background:rgba(0,0,0,.2);border:1px solid ${d.is_default ? 'rgba(243,156,18,.4)' : 'rgba(255,255,255,.08)'};border-radius:8px;margin-bottom:8px;">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                                <div>
+                                    ${d.is_default ? '<span style="font-size:10px;padding:2px 8px;background:rgba(243,156,18,.2);color:#f39c12;border-radius:8px;font-weight:600;">預設</span> ' : ''}
+                                    <strong style="color:#fff;">${d.name}</strong>
+                                    <span style="color:#888;font-size:12px;margin-left:6px;">${d.phone}</span>
+                                </div>
+                                <div style="display:flex;gap:4px;">
+                                    ${!d.is_default ? '<button onclick="setDefaultDeclarant('+d.id+')" style="background:rgba(243,156,18,.15);border:none;color:#f39c12;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">⭐ 預設</button>' : ''}
+                                    <button onclick="deleteDeclarant(${d.id})" style="background:rgba(231,76,60,.15);border:none;color:#e74c3c;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">🗑</button>
+                                </div>
+                            </div>
+                            <div style="font-size:12px;color:#aaa;margin-top:4px;">${d.address}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div style="text-align:center;color:#666;padding:20px;">尚無申報人，請新增</div>';
+                }
+            } catch(e) {}
+        }
+
+        async function saveNewDeclarant() {
+            const data = {
+                g_code: currentCustomer.g_code,
+                name: document.getElementById('dec-name').value.trim(),
+                phone: document.getElementById('dec-phone').value.trim(),
+                address: document.getElementById('dec-address').value.trim(),
+                is_default: document.getElementById('dec-default').checked
+            };
+            if (!data.name || !data.phone || !data.address) {
+                showToast('申報人姓名、EZ WAY 綁定手機、地址為必填', 'error'); return;
+            }
+            try {
+                const res = await apiFetch('/api/declarants', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showToast('✅ 申報人已新增', 'success');
+                    ['dec-name','dec-phone','dec-address'].forEach(id => document.getElementById(id).value = '');
+                    document.getElementById('dec-default').checked = false;
+                    loadDeclarants();
+                } else { showToast('❌ ' + (result.error || '新增失敗'), 'error'); }
+            } catch(e) { showToast('網路錯誤', 'error'); }
+        }
+
+        async function setDefaultDeclarant(id) {
+            try {
+                await apiFetch('/api/declarants/'+id+'/default', {
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({g_code: currentCustomer.g_code})
+                });
+                loadDeclarants();
+                showToast('✅ 已設為預設申報人', 'success');
+            } catch(e) {}
+        }
+
+        async function deleteDeclarant(id) {
+            if (!confirm('確定刪除此申報人？')) return;
+            try {
+                await apiFetch('/api/declarants/'+id, {
+                    method:'DELETE', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({g_code: currentCustomer.g_code})
+                });
+                loadDeclarants();
+                showToast('已刪除', 'success');
+            } catch(e) {}
+        }
+
+        // ── 出貨申請：本次申報人多選（一箱一位，勾多位時後台依箱數分配）──
+        async function loadShipDeclarants() {
+            const box = document.getElementById('shipDeclarantList');
+            document.getElementById('shipDeclarantHint').style.display = 'none';
+            document.getElementById('shipDeclarantConsentRow').style.display = 'none';
+            document.getElementById('shipDeclarantConsent').checked = false;
+            try {
+                const res = await apiFetch(`/api/declarants?g_code=${currentCustomer.g_code}`);
+                const data = await res.json();
+                if (!data.success || !data.declarants.length) {
+                    box.innerHTML = '<div style="color:#888;font-size:12px;padding:10px;text-align:center;">尚未建立申報人，請先到 <a href="javascript:closeShipAddressModal();openDeclarants();" style="color:#e67e22;">🧾 申報人</a> 新增。未指定時，報單申報人將沿用收件人資料。</div>';
+                    return;
+                }
+                box.innerHTML = data.declarants.map(d => `
+                    <label style="display:flex;align-items:flex-start;gap:9px;padding:10px;background:rgba(0,0,0,.2);border:1px solid ${d.is_default ? 'rgba(243,156,18,.35)' : 'rgba(255,255,255,.08)'};border-radius:8px;cursor:pointer;">
+                        <input type="checkbox" class="ship-dec" value="${d.id}" ${d.is_default ? 'checked' : ''} onchange="updateShipDeclarantHint()" style="accent-color:#f39c12;width:16px;height:16px;margin-top:2px;flex-shrink:0;">
+                        <span>
+                            ${d.is_default ? '<span style="font-size:10px;padding:1px 7px;background:rgba(243,156,18,.2);color:#f39c12;border-radius:8px;font-weight:600;">預設</span> ' : ''}
+                            <strong style="color:#fff;">${d.name}</strong>
+                            <span style="color:#888;font-size:12px;margin-left:6px;">${d.phone}</span>
+                            <div style="font-size:11px;color:#999;margin-top:3px;">${d.address}</div>
+                        </span>
+                    </label>
+                `).join('');
+                updateShipDeclarantHint();
+            } catch(e) {
+                box.innerHTML = '<div style="color:#888;font-size:12px;padding:10px;text-align:center;">申報人載入失敗</div>';
+            }
+        }
+
+        function updateShipDeclarantHint() {
+            const checked = document.querySelectorAll('.ship-dec:checked');
+            const hint = document.getElementById('shipDeclarantHint');
+            const consentRow = document.getElementById('shipDeclarantConsentRow');
+            if (checked.length > 1) {
+                hint.textContent = '您選了 ' + checked.length + ' 位申報人，出貨時我們會依箱數分配，每位都需各自在 EZ WAY 確認。';
+                hint.style.display = 'block';
+            } else {
+                hint.style.display = 'none';
+            }
+            consentRow.style.display = checked.length > 0 ? 'flex' : 'none';
+            if (!checked.length) document.getElementById('shipDeclarantConsent').checked = false;
+        }
+
+        function getShipSelectedDeclarants() {
+            return [...document.querySelectorAll('.ship-dec:checked')].map(c => parseInt(c.value));
+        }
+
+        // ── 出貨地址選擇 ──
+        async function openShipAddressModal() {
+            document.getElementById('shipAddressModal').style.display = 'flex';
+            document.getElementById('shipNote').value = '';
+            loadShipServices();
+            loadShipDeclarants();
+            try {
+                const res = await apiFetch(`/api/addresses?g_code=${currentCustomer.g_code}`);
+                const data = await res.json();
+                const container = document.getElementById('shipAddressList');
+                if (data.success && data.addresses.length > 0) {
+                    container.innerHTML = data.addresses.map((a, i) => `
+                        <label style="display:block;padding:12px;background:rgba(0,0,0,.2);border:2px solid ${a.is_default ? '#f39c12' : 'rgba(255,255,255,.08)'};border-radius:8px;margin-bottom:8px;cursor:pointer;">
+                            <div style="display:flex;align-items:flex-start;gap:10px;">
+                                <input type="radio" name="ship-addr" value="${a.id}" data-recipient="${a.recipient}" data-phone="${a.phone}" data-address="${(a.zipcode||'')+' '+a.address}" ${a.is_default ? 'checked' : ''} style="accent-color:#f39c12;width:18px;height:18px;margin-top:2px;">
+                                <div>
+                                    ${a.label ? '<span style="font-size:11px;color:#3498db;font-weight:600;">'+a.label+'</span> ' : ''}
+                                    <strong style="color:#fff;">${a.recipient}</strong>
+                                    <span style="color:#888;font-size:12px;margin-left:6px;">${a.phone}</span>
+                                    <div style="font-size:12px;color:#aaa;margin-top:4px;">${a.zipcode ? a.zipcode+' ' : ''}${a.address}</div>
+                                </div>
+                            </div>
+                        </label>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">尚無地址，請先到 <a href="javascript:closeShipAddressModal();openAddressBook();" style="color:#f39c12;">📒 地址簿</a> 新增</div>';
+                }
+            } catch(e) { showToast('載入地址失敗', 'error'); }
+        }
+
+        function closeShipAddressModal() {
+            document.getElementById('shipAddressModal').style.display = 'none';
+        }
+
+        // ── 加值服務選取 ──
+        var _shipServicesCache = null;
+        async function loadShipServices() {
+            var box = document.getElementById('shipServicesList');
+            document.getElementById('shipServicesTotal').style.display = 'none';
+            try {
+                if (!_shipServicesCache) {
+                    const res = await apiFetch('/api/extra_services/catalog');
+                    const data = await res.json();
+                    _shipServicesCache = (data.success && data.services) ? data.services : [];
+                }
+                if (!_shipServicesCache.length) {
+                    box.innerHTML = '<div style="color:#666;font-size:12px;text-align:center;padding:10px;">目前沒有可選的加值服務</div>';
+                    return;
+                }
+                box.innerHTML = _shipServicesCache.map(function(s){
+                    var isConsolidate = (s.name === '合箱');
+                    var isPerItem = (s.name.indexOf('每件') >= 0);   // 現場依件數計算
+                    var onSite = isConsolidate || isPerItem;          // 意願型：勾選不計費
+                    var effPrice = onSite ? 0 : s.price;
+                    var priceLabel = isConsolidate ? '免費' : (isPerItem ? '依件數' : ('NT$' + s.price));
+                    var descHtml;
+                    if (isConsolidate) {
+                        descHtml = '<span style="display:block;font-size:11px;color:#888;">合箱費由系統依箱數自動計算，勾選不另外收費</span>';
+                    } else if (isPerItem) {
+                        descHtml = '<span style="display:block;font-size:11px;color:#e6a23c;">費用依實際包裝件數，出貨時由現場人員計算</span>'
+                                 + (s.desc ? '<span style="display:block;font-size:11px;color:#888;">' + s.desc + '</span>' : '');
+                    } else {
+                        descHtml = (s.desc ? '<span style="display:block;font-size:11px;color:#888;">' + s.desc + '</span>' : '');
+                    }
+                    var qtyBox = onSite ? '' : '<input type="number" class="ship-svc-qty" min="1" value="1" disabled onchange="updateShipServicesTotal()" oninput="updateShipServicesTotal()" style="width:52px;padding:4px 6px;font-size:12px;flex:0 0 auto;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;">';
+                    return '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.06);border-radius:8px;cursor:pointer;">'
+                        + '<input type="checkbox" class="ship-svc-chk" data-id="' + s.id + '" data-price="' + effPrice + '" onchange="onShipSvcToggle(this);updateShipServicesTotal();" style="accent-color:#9b59b6;width:16px;height:16px;flex:0 0 auto;">'
+                        + '<span style="flex:1;font-size:13px;color:#fff;">' + s.name + descHtml + '</span>'
+                        + '<span style="font-size:12px;color:#9b59b6;font-weight:600;flex:0 0 auto;">' + priceLabel + '</span>'
+                        + qtyBox
+                        + '</label>';
+                }).join('');
+            } catch(e) {
+                box.innerHTML = '<div style="color:#666;font-size:12px;text-align:center;padding:10px;">加值服務載入失敗（不影響出貨）</div>';
+            }
+        }
+        function onShipSvcToggle(chk) {
+            var qty = chk.closest('label').querySelector('.ship-svc-qty');
+            if (qty) qty.disabled = !chk.checked;
+        }
+        function updateShipServicesTotal() {
+            var total = 0;
+            document.querySelectorAll('.ship-svc-chk:checked').forEach(function(chk){
+                var qtyEl = chk.closest('label').querySelector('.ship-svc-qty');
+                var qty = qtyEl ? (parseInt(qtyEl.value) || 1) : 1;
+                total += (parseInt(chk.dataset.price) || 0) * qty;
+            });
+            var el = document.getElementById('shipServicesTotal');
+            if (total > 0) { el.textContent = '加值服務小計：NT$' + total + '（申請，實際以帳單為準）'; el.style.display = 'block'; }
+            else { el.style.display = 'none'; }
+        }
+        function getShipSelectedServices() {
+            var out = [];
+            document.querySelectorAll('.ship-svc-chk:checked').forEach(function(chk){
+                var qtyEl = chk.closest('label').querySelector('.ship-svc-qty');
+                var qty = qtyEl ? (parseInt(qtyEl.value) || 1) : 1;
+                if (qty < 1) qty = 1;
+                out.push({ id: chk.dataset.id, qty: qty });
+            });
+            return out;
+        }
+
+        async function confirmShipRequest(addressConfirmed) {
+            const selected = document.querySelector('input[name="ship-addr"]:checked');
+            if (!selected) { showToast('請選擇寄送地址', 'error'); return; }
+            const declarantIds = getShipSelectedDeclarants();
+            // 有勾申報人就必須勾同意聲明（申報人＝納稅義務人，需本人同意且完成 EZ WAY 實名認證）
+            if (declarantIds.length > 0 && !document.getElementById('shipDeclarantConsent').checked) {
+                showToast('請勾選申報人同意聲明', 'error'); return;
+            }
+            const note = document.getElementById('shipNote').value.trim();
+            try {
+                const res = await apiFetch('/api/shipment_request', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        g_code: currentCustomer.g_code,
+                        customer_name: currentCustomer.name,
+                        package_ids: pendingShipIds,
+                        note: note,
+                        ship_recipient: selected.dataset.recipient,
+                        ship_phone: selected.dataset.phone,
+                        ship_address: selected.dataset.address,
+                        extra_services: getShipSelectedServices(),
+                        declarant_ids: declarantIds,
+                        // 同意聲明送到後端存證（前端擋是體驗，後端擋才是防線）
+                        declarant_consent: document.getElementById('shipDeclarantConsent').checked,
+                        address_confirmed: !!addressConfirmed
+                    })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showToast('✅ ' + result.message, 'success');
+                    closeShipAddressModal();
+                    loadPackages();
+                    updateCustomerBadges();
+                } else if (result.need_address_confirm) {
+                    // 地址不完整 → 強力提示，讓客戶去修正或確認仍要送出
+                    if (confirm('⚠️ ' + result.error + '\n\n地址：' + selected.dataset.address + '\n\n建議先到「📒 地址簿」補齊縣市與區（例：嘉義市西區）。\n\n按「確定」＝我確認地址正確、仍要送出；按「取消」＝先去修改。')) {
+                        confirmShipRequest(true);
+                    }
+                } else {
+                    showToast('❌ ' + (result.error || '申請失敗'), 'error');
+                }
+            } catch (e) { showToast('網路錯誤', 'error'); }
+        }
+
+        // 末五碼顯示正規化：去浮點尾巴(.0)，純數字補回5位還原被吃掉的前導0；非數字(現金/LINE Pay)原樣
+        function fmtLast5(v) {
+            var s = String(v == null ? '' : v).trim().replace(/\.0+$/, '');
+            return /^\d{1,5}$/.test(s) ? s.padStart(5, '0') : s;
+        }
+        // 是否已回報匯款：0/00000/現金 等都算已回報，只有 null/空字串才算未回報
+        function hasPayment(v) {
+            return v !== null && v !== undefined && String(v).trim() !== '';
+        }
+
+        async function submitPayment(reqId) {
+            const input = document.getElementById('pay5-' + reqId);
+            const last5 = (input?.value || '').trim();
+            if (!last5 || last5.length !== 5) { showToast('請輸入帳號後五碼（5位數字）', 'error'); return; }
+            try {
+                const res = await apiFetch('/api/shipment_requests/' + reqId + '/payment', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ last5: last5, g_code: currentCustomer.g_code })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showToast('✅ 匯款回報成功！', 'success');
+                    loadShipRequests();
+                    updateCustomerBadges();
+                } else {
+                    showToast('❌ ' + (result.error || '回報失敗'), 'error');
+                }
+            } catch(e) { showToast('網路錯誤', 'error'); }
+        }
+
+        async function loadShipRequests() {
+            if (!currentCustomer) return;
+            try {
+                const res = await apiFetch(`/api/shipment_requests?g_code=${currentCustomer.g_code}`);
+                const result = await res.json();
+                const card = document.getElementById('shipRequestsCard');
+                const container = document.getElementById('shipRequestsList');
+                if (result.success && result.requests && result.requests.length > 0) {
+                    card.style.display = 'block';
+                    container.innerHTML = result.requests.map(req => {
+                        const statusColors = {'待處理':'#f39c12','處理中':'#3498db','已出貨':'#27ae60','已拒絕':'#e74c3c'};
+                        const color = statusColors[req.status] || '#888';
+                        
+                        // 帳單區塊
+                        let billingHtml = '';
+                        if (req.total_fee && req.total_fee > 0) {
+                            billingHtml = `
+                            <div style="margin:-6px 0 10px 0;padding:16px;background:linear-gradient(135deg,rgba(39,174,96,0.08),rgba(39,174,96,0.03));border:1px solid rgba(39,174,96,0.2);border-radius:10px;">
+                                <div style="font-size:14px;font-weight:700;color:#27ae60;margin-bottom:10px;">💰 出貨帳單</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;color:#ccc;">
+                                    <div>計費重量：<strong style="color:#fff;">${req.billed_weight || 0} kg</strong></div>
+                                    <div>運費單價：<strong style="color:#fff;">${req.rate_per_kg || 0} 台幣/kg</strong></div>
+                                    <div>運費小計：<strong style="color:#fff;">NT$ ${Math.round(req.shipping_fee || 0).toLocaleString()}</strong></div>
+                                    <div>理貨費：<strong style="color:#fff;">NT$ ${Math.round(req.handling_fee || 0).toLocaleString()}</strong></div>
+                                    ${(() => {
+                                        let cf = Math.round(req.consolidation_fee || 0);
+                                        if (!cf) {
+                                            let extras_total = 0;
+                                            try {
+                                                let ex = typeof req.extra_services === 'string' ? JSON.parse(req.extra_services || '[]') : (req.extra_services || []);
+                                                ex.forEach(e => { extras_total += (e.subtotal || e.qty * e.price || e.price || 0); });
+                                            } catch(e){}
+                                            // 舊單 consolidation_fee 沒寫進去時用合計倒推；信件費另有自己那列，這裡一定要扣掉，
+                                            // 否則沒合箱的客人會看到一筆其實是信件費的「合箱費」
+                                            cf = Math.round((req.total_fee || 0) - (req.shipping_fee || 0) - (req.handling_fee || 0) - extras_total - (req.letter_fee || 0));
+                                        }
+                                        return cf > 0 ? '<div>合箱費：<strong style="color:#fff;">NT$ ' + cf.toLocaleString() + '</strong></div>' : '';
+                                    })()}
+                                    ${(() => {
+                                        // 信件費（每件 NT$20）：有才顯示，跟合箱費一樣為 0 不佔列
+                                        const lf = Math.round(req.letter_fee || 0);
+                                        return lf > 0 ? '<div>信件費：<strong style="color:#fff;">NT$ ' + lf.toLocaleString() + '</strong></div>' : '';
+                                    })()}
+                                </div>
+                                ${(() => {
+                                    try {
+                                        const extras = typeof req.extra_services === 'string' ? JSON.parse(req.extra_services || '[]') : (req.extra_services || []);
+                                        if (extras.length > 0) {
+                                            return '<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);font-size:13px;color:#ccc;">'
+                                                + '<div style="font-weight:600;color:#9b59b6;margin-bottom:4px;">⭐ 加值服務</div>'
+                                                + extras.map(e => '<div class="bill-extra-row" style="display:flex;justify-content:space-between;padding:2px 0;"><span>' + e.name + (e.qty && e.qty > 1 ? ' ×' + e.qty : '') + '</span><strong style="color:#fff;">NT$ ' + ((e.subtotal || e.qty * e.price || e.price) || 0).toLocaleString() + '</strong></div>').join('')
+                                                + '</div>';
+                                        }
+                                        return '';
+                                    } catch(e) { return ''; }
+                                })()}
+                                ${(() => {
+                                    return '';  // FWT JAPAN：只算重量不算材積，不顯示材積明細
+                                    try {
+                                        const bx = JSON.parse(req.boxes_json || '[]');
+                                        if (!Array.isArray(bx) || !bx.length) return '';
+                                        const rows = bx.map((b, i) => {
+                                            const w = parseFloat(b.actual_weight) || 0;
+                                            const L = parseFloat(b.length) || 0, W = parseFloat(b.width) || 0, H = parseFloat(b.height) || 0;
+                                            if (!(L > 0 && W > 0 && H > 0)) return '';
+                                            const vol = (L * W * H) / 6000;
+                                            const byVol = vol > w * 3;
+                                            const label = bx.length > 1 ? ('第 ' + (i + 1) + ' 箱：') : '';
+                                            return '<div style="padding:2px 0;">' + label
+                                                + '尺寸 <strong style="color:#fff;">' + L + '×' + W + '×' + H + ' cm</strong>'
+                                                + '，實際 ' + w + ' kg，材積 ' + vol.toFixed(1) + ' kg'
+                                                + (byVol ? '<span style="color:#e67e22;"> → 材積大於實際 3 倍，以材積計費</span>' : '')
+                                                + '</div>';
+                                        }).filter(Boolean).join('');
+                                        if (!rows) return '';
+                                        return '<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);font-size:12px;color:#bbb;line-height:1.7;">'
+                                            + '<div style="font-weight:600;color:#e67e22;margin-bottom:4px;">📦 材積明細</div>' + rows
+                                            + '<div style="margin-top:4px;color:#888;">※ 一般照實際重量計費；材積（長×寬×高÷6000）超過實際重量 3 倍時，改以材積計費。</div>'
+                                            + '</div>';
+                                    } catch(e) { return ''; }
+                                })()}
+                                <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);font-size:18px;font-weight:700;color:#f39c12;">
+                                    合計：NT$ ${Math.round(req.total_fee).toLocaleString()}
+                                </div>
+                                <div style="margin-top:12px;padding:12px;background:rgba(0,0,0,0.2);border-radius:8px;font-size:13px;color:#ccc;line-height:1.8;">
+                                    <div style="font-weight:600;color:#f39c12;margin-bottom:4px;">🏦 匯款資訊</div>
+                                    銀行代碼：<strong style="color:#fff;">${_paidEsc(document.body.dataset.bankName)}</strong><br>
+                                    戶名：<strong style="color:#fff;">${_paidEsc(document.body.dataset.bankHolder)}</strong><br>
+                                    帳號：<strong style="color:#fff;">${_paidEsc(document.body.dataset.bankAccount || '（請設定 BRAND_BANK_ACCOUNT）')}</strong>
+                                    <button onclick="navigator.clipboard.writeText(document.body.dataset.bankAccount);this.textContent='已複製✓';setTimeout(()=>this.textContent='📋',1500)" style="background:rgba(243,156,18,.2);border:none;color:#f39c12;padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;margin-left:6px;">📋</button>
+                                    <div style="margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,0.12);">
+                                        <span style="font-weight:600;color:#3498db;">💳 線上刷卡</span>
+                                        <span style="color:#ccc;">：如需刷卡支付，請<strong style="color:#fff;">私訊客服</strong>為您開啟</span>
+                                    </div>
+                                </div>
+                                ${hasPayment(req.payment_last5)
+                                    ? `<div style="margin-top:10px;padding:10px 14px;background:rgba(39,174,96,0.1);border:1px solid rgba(39,174,96,0.3);border-radius:8px;font-size:13px;color:#27ae60;font-weight:600;">
+                                        ✅ 已回報匯款（後五碼：${fmtLast5(req.payment_last5)}）<span style="font-size:11px;color:#888;font-weight:400;margin-left:8px;">${req.payment_at || ''}</span>
+                                       </div>`
+                                    : `<div style="margin-top:10px;padding:12px;background:rgba(243,156,18,0.08);border:1px solid rgba(243,156,18,0.2);border-radius:8px;">
+                                        <div style="font-size:13px;color:#f39c12;font-weight:600;margin-bottom:8px;">💳 匯款回報後倉庫自動出貨</div>
+                                        <div style="display:flex;gap:8px;align-items:center;">
+                                            <input type="text" id="pay5-${req.id}" maxlength="5" placeholder="帳號後五碼" style="width:120px;padding:8px 12px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#fff;font-size:14px;text-align:center;letter-spacing:2px;">
+                                            <button onclick="submitPayment(${req.id})" style="padding:8px 16px;background:linear-gradient(135deg,#27ae60,#2ecc71);border:none;border-radius:6px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">確認回報</button>
+                                        </div>
+                                       </div>`
+                                }
+                            </div>`;
+                        }
+                        
+                        // 各箱追蹤號（多箱）：從 boxes_json 取，只顯示追蹤號
+                        let boxesHtml = '';
+                        try {
+                            var _bx = JSON.parse(req.boxes_json || '[]');
+                            var _boxes = (Array.isArray(_bx) ? _bx : []).filter(function(b){ return (b.tracking_num||'').trim(); });
+                            if (_boxes.length > 1) {
+                                boxesHtml = '<div style="margin:-4px 0 10px 0;padding:10px 14px;background:rgba(155,89,182,0.06);border:1px solid rgba(155,89,182,0.2);border-radius:8px;font-size:12px;">'
+                                    + '<div style="color:#c9a9e0;font-weight:600;margin-bottom:4px;">📦 共 ' + _boxes.length + ' 箱</div>'
+                                    + _boxes.map(function(b,i){
+                                        var t = (b.tracking_num||'').trim();
+                                        var L = parseFloat(b.length)||0, W = parseFloat(b.width)||0, H = parseFloat(b.height)||0;
+                                        var dim = (L>0&&W>0&&H>0) ? '<span style="color:#999;"> ｜ 尺寸 '+L+'×'+W+'×'+H+' cm</span>' : '';
+                                        return '<div style="color:#ccc;margin-bottom:2px;">第 '+(i+1)+' 箱：<strong style="color:#fff;">'+t+'</strong>'+dim+'</div>';
+                                    }).join('')
+                                    + '</div>';
+                            }
+                        } catch(e) {}
+
+                        // 台灣配送貨況（僅已出貨顯示）：有真實單號→顯示查詢；否則依已出貨天數顯示估計時間軸
+                        let deliveryHtml = '';
+                        if (req.status === '已出貨') {
+                            if (req.delivery_tracking) {
+                                const carrier = req.delivery_carrier || '台灣物流';
+                                deliveryHtml = `<div style="margin:-6px 0 10px 0;padding:14px;background:linear-gradient(135deg,rgba(52,152,219,0.12),rgba(52,152,219,0.04));border:1px solid rgba(52,152,219,0.3);border-radius:10px;">
+                                    <div style="font-size:14px;font-weight:700;color:#3498db;margin-bottom:8px;">🚚 台灣配送</div>
+                                    <div style="font-size:13px;color:#ccc;margin-bottom:10px;">${carrier}　單號：<strong style="color:#fff;">${req.delivery_tracking}</strong></div>
+                                    <a href="${req.delivery_url}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:linear-gradient(135deg,#3498db,#2980b9);border-radius:10px;color:#fff;text-decoration:none;font-size:14px;font-weight:700;">📍 查詢台灣配送進度</a>
+                                </div>`;
+                            } else {
+                                let days = 0;
+                                if (req.updated_at) {
+                                    const sd = new Date(String(req.updated_at).replace(/-/g,'/').slice(0,19));
+                                    if (!isNaN(sd)) {
+                                        const t = new Date(); t.setHours(0,0,0,0); sd.setHours(0,0,0,0);
+                                        days = Math.floor((t - sd) / 86400000);
+                                    }
+                                }
+                                const stages = [
+                                    '📦 已打包，等待送往機場',
+                                    '🏭 抵達機場保稅倉，等待出口',
+                                    '✈️ 抵達台北桃園機場，清關中',
+                                    '✈️ 清關中，等待台灣配送派件'
+                                ];
+                                const idx = days <= 0 ? 0 : (days >= 3 ? 3 : days);
+                                const steps = stages.map((s, i) => {
+                                    const done = i < idx, now = i === idx;
+                                    const col = now ? '#3498db' : (done ? '#27ae60' : '#555');
+                                    const wt = now ? '700' : '400';
+                                    return `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;color:${col};font-weight:${wt};font-size:12px;">${done ? '✓' : (now ? '▶' : '○')} ${s}</div>`;
+                                }).join('');
+                                deliveryHtml = `<div style="margin:-6px 0 10px 0;padding:14px;background:rgba(52,152,219,0.05);border:1px solid rgba(52,152,219,0.15);border-radius:10px;">
+                                    <div style="font-size:14px;font-weight:700;color:#3498db;margin-bottom:8px;">🚚 貨況進度</div>
+                                    ${steps}
+                                    <div style="font-size:11px;color:#888;margin-top:8px;">※ 以上為預估進度；台灣配送單號將於派件後自動更新</div>
+                                </div>`;
+                            }
+                        }
+                        
+                        return `<div class="package-item" style="grid-template-columns: 1fr 2fr 1fr 1fr;">
+                            <div><div class="label">申請時間</div><div class="value" style="font-size:12px;">${req.created_at}</div></div>
+                            <div><div class="label">包裹內容</div><div class="value" style="font-size:12px;line-height:1.8;">${(req.package_summary || '-').replace(/\n/g, '<br>')}</div></div>
+                            <div><div class="label">狀態</div><div class="value"><span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;background:${color}22;color:${color};">${req.status}</span></div></div>
+                            <div><div class="label">管理員回覆</div><div class="value" style="font-size:12px;">${req.admin_note || '-'}</div></div>
+                        </div>
+                        ${req.ship_recipient ? `<div style="margin:-6px 0 10px 0;padding:10px 14px;background:rgba(52,152,219,0.06);border:1px solid rgba(52,152,219,0.15);border-radius:8px;font-size:12px;color:#aaa;">📦 寄送至：<strong style="color:#fff;">${req.ship_recipient}</strong> ${req.ship_phone || ''}<br>📍 ${req.ship_address || ''}</div>` : ''}
+                        ${boxesHtml}
+                        ${deliveryHtml}
+                        ${req.note ? `<div style="margin:-6px 0 10px 0;padding:8px 14px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:12px;color:#888;">📝 ${req.note}</div>` : ''}
+                        ${billingHtml}`;
+                    }).join('');
+                } else {
+                    // 沒有出貨申請 → 顯示空狀態（避免整個分頁空白）
+                    card.style.display = 'block';
+                    container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>尚無出貨申請記錄</p></div>';
+                }
+            } catch(e) {}
+        }
+
+        // ── 無主包裹認領牆（會員端）──
+        async function loadUnclaimed() {
+            if (!currentCustomer) return;   // 認領牆是登入後的功能（伺服器端也擋）
+            const container = document.getElementById('unclaimedList');
+            const g = currentCustomer.g_code;
+            try {
+                const res = await apiFetch(`/api/unclaimed?g_code=${encodeURIComponent(g)}`);
+                const data = await res.json();
+                if (!data.success || !data.items || !data.items.length) {
+                    container.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>目前沒有無主包裹</p></div>';
+                    return;
+                }
+                container.innerHTML = data.items.map(u => {
+                    // 到倉天數：滿 7 天轉紅，提醒盡快認領（久放可能產生倉租／退運）
+                    const days = (u.days === null || u.days === undefined) ? null : u.days;
+                    const dayColor = (days !== null && days >= 7) ? '#e74c3c' : '#f39c12';
+                    const dayText = (days === null) ? '-' : (days + ' 天');
+                    const others = u.claim_count - (u.claimed_by_me ? 1 : 0);
+                    const btn = u.claimed_by_me
+                        ? `<button class="btn btn-secondary" style="padding:8px 14px;font-size:12px;" onclick="cancelUnclaimedClaim(${u.id})">✅ 已申請｜撤回</button>`
+                        : `<button class="btn btn-primary" style="padding:8px 14px;font-size:12px;" onclick="claimUnclaimedPkg(${u.id})">🙋 這是我的</button>`;
+                    return `
+                    <div class="package-item" style="position:relative;">
+                        <div><div class="label">單號末四碼</div><div class="value" style="font-size:13px;">${u.logis_tail || '-'}</div></div>
+                        <div><div class="label">重量</div><div class="value">${u.weight ? u.weight + ' kg' : '待秤重'}</div></div>
+                        <div><div class="label">到倉日期</div><div class="value" style="font-size:13px;">${u.registered_date || '-'}</div></div>
+                        <div><div class="label">到倉天數</div><div class="value" style="color:${dayColor};font-weight:700;">${dayText}</div></div>
+                        <div><div class="label">認領</div><div class="value">${btn}</div></div>
+                    </div>
+                    ${(u.product_name || u.note) ? `<div style="margin:-6px 0 6px 0;padding:8px 14px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:12px;color:#bbb;">📝 品名／外觀：${u.product_name || ''}${(u.product_name && u.note) ? '｜' : ''}${u.note || ''}</div>` : ''}
+                    ${others > 0 ? `<div style="margin:-2px 0 10px 0;padding:6px 14px;font-size:12px;color:#e67e22;">⚠️ 已有 ${others} 位會員申請認領這件，倉庫會核對後處理</div>` : '<div style="margin-bottom:10px;"></div>'}
+                `}).join('');
+            } catch (e) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>載入失敗，請按「🔄 重新整理」再試</p></div>';
+            }
+        }
+
+        async function claimUnclaimedPkg(id) {
+            if (!currentCustomer) { showToast('請先登入', 'error'); return; }
+            const note = prompt('補充說明（選填）：例如「日本 Amazon 寄出，內容是保養品」，有助倉庫核對');
+            if (note === null) return;   // 按取消 → 不送出
+            try {
+                const res = await apiFetch(`/api/unclaimed/${id}/claim_request`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ g_code: currentCustomer.g_code, note: note.trim() })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.duplicated ? data.message : '✅ ' + data.message, data.duplicated ? 'error' : 'success');
+                    loadUnclaimed();
+                    updateCustomerBadges();
+                } else { showToast('❌ ' + (data.error || '申請失敗'), 'error'); }
+            } catch (e) { showToast('網路錯誤', 'error'); }
+        }
+
+        async function cancelUnclaimedClaim(id) {
+            if (!currentCustomer) return;
+            if (!confirm('確定撤回這件的認領申請？')) return;
+            try {
+                const res = await apiFetch(`/api/unclaimed/${id}/claim_request`, {
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ g_code: currentCustomer.g_code })
+                });
+                const data = await res.json();
+                if (data.success) { showToast('已撤回申請', 'success'); loadUnclaimed(); updateCustomerBadges(); }
+                else { showToast('❌ ' + (data.error || '撤回失敗'), 'error'); }
+            } catch (e) { showToast('網路錯誤', 'error'); }
+        }
+
+        async function updateCustomerBadges() {
+            if (!currentCustomer) return;
+            try {
+                // 我的包裹：倉庫中的數量（已到貨/已入庫）
+                const pkgRes = await apiFetch(`/api/packages?g_code=${currentCustomer.g_code}`);
+                const pkgData = await pkgRes.json();
+                const badgePkg = document.getElementById('badge-packages');
+                if (pkgData.success && pkgData.packages) {
+                    const waitingCount = pkgData.packages.filter(p => p.status === '已到貨' || p.status === '已入庫').length;
+                    if (waitingCount > 0) {
+                        badgePkg.textContent = waitingCount;
+                        badgePkg.style.display = 'inline';
+                    } else {
+                        badgePkg.style.display = 'none';
+                    }
+                } else { badgePkg.style.display = 'none'; }
+
+                // 運單查詢：有帳單待付款的數量
+                const reqRes = await apiFetch(`/api/shipment_requests?g_code=${currentCustomer.g_code}`);
+                const reqData = await reqRes.json();
+                const badgeOrders = document.getElementById('badge-orders');
+                if (reqData.success && reqData.requests) {
+                    const unpaidCount = reqData.requests.filter(r => 
+                        r.status === '已出貨' && r.total_fee && r.total_fee > 0 && !hasPayment(r.payment_last5)
+                    ).length;
+                    if (unpaidCount > 0) {
+                        badgeOrders.textContent = unpaidCount;
+                        badgeOrders.style.display = 'inline';
+                    } else {
+                        badgeOrders.style.display = 'none';
+                    }
+                } else { badgeOrders.style.display = 'none'; }
+
+                // 預報包裹：待處理中的預報
+                const fcRes = await apiFetch(`/api/my_forecasts?g_code=${currentCustomer.g_code}`);
+                const fcData = await fcRes.json();
+                const badgeForecast = document.getElementById('badge-forecast');
+                if (fcData.success && fcData.forecasts) {
+                    const pendingCount = fcData.forecasts.filter(f => f.status === '待處理').length;
+                    if (pendingCount > 0) {
+                        badgeForecast.textContent = pendingCount;
+                        badgeForecast.style.display = 'inline';
+                    } else {
+                        badgeForecast.style.display = 'none';
+                    }
+                } else { badgeForecast.style.display = 'none'; }
+
+                // 無主包裹：牆上還沒被自己申請的件數（提醒去看看有沒有自己的）
+                const ucRes = await apiFetch(`/api/unclaimed?g_code=${currentCustomer.g_code}`);
+                const ucData = await ucRes.json();
+                const badgeUc = document.getElementById('badge-unclaimed');
+                if (ucData.success && ucData.items) {
+                    const openCount = ucData.items.filter(u => !u.claimed_by_me).length;
+                    if (openCount > 0) {
+                        badgeUc.textContent = openCount;
+                        badgeUc.style.display = 'inline';
+                    } else {
+                        badgeUc.style.display = 'none';
+                    }
+                } else { badgeUc.style.display = 'none'; }
+            } catch(e) { console.log('badge update error', e); }
+        }
+
+        // ── 公告 ──（每次登入都顯示，可勾選「不要再顯示這則」單獨靜音）
+        async function checkAnnouncements() {
+            try {
+                const res = await apiFetch('/api/announcements');
+                const data = await res.json();
+                if (!data.success || !data.announcements || !data.announcements.length) return;
+                // 過濾被勾選「不要再顯示」的公告
+                let mutedIds = [];
+                try { mutedIds = JSON.parse(localStorage.getItem('mutedAnnouncements') || '[]'); } catch(e) { mutedIds = []; }
+                const toShow = data.announcements.filter(a => !mutedIds.includes(a.id));
+                if (!toShow.length) return;
+                const container = document.getElementById('announcementContent');
+                container.innerHTML = toShow.map(a => `
+                    <div style="margin-bottom:14px;padding:16px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.08);border-radius:10px;">
+                        <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:8px;">${a.title}</div>
+                        <div style="font-size:13px;color:#ccc;line-height:1.8;white-space:pre-line;">${a.content.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" style="color:#3498db;word-break:break-all;">$1</a>')}</div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06);">
+                            <span style="font-size:11px;color:#666;">${a.created_at}</span>
+                            <label style="font-size:12px;color:#888;cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:6px;">
+                                <input type="checkbox" onchange="muteAnnouncement(${a.id}, this.checked)" style="accent-color:#f39c12;cursor:pointer;width:14px;height:14px;">
+                                🔕 不要再顯示這則
+                            </label>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('announcementModal').style.display = 'flex';
+            } catch(e) {}
+        }
+
+        function muteAnnouncement(id, muted) {
+            let list = [];
+            try { list = JSON.parse(localStorage.getItem('mutedAnnouncements') || '[]'); } catch(e) { list = []; }
+            if (muted) {
+                if (!list.includes(id)) list.push(id);
+            } else {
+                list = list.filter(function(x){ return x !== id; });
+            }
+            localStorage.setItem('mutedAnnouncements', JSON.stringify(list));
+        }
+
+        function closeAnnouncementModal() {
+            document.getElementById('announcementModal').style.display = 'none';
+        }
+
+        function formatLogisDisplay(val) {
+            if (!val || val === '-') return '-';
+            return val.replace(/\D/g, '').replace(/(.{4})(?=.)/g, '$1-');
+        }
+
+        function getStatusClass(statusText) {
+            if (statusText === '已到貨') return 'status-arrived';
+            if (statusText === '已出貨') return 'status-shipped';
+            return 'status-waiting';
+        }
+
+        function showToast(message, type = 'success') {
+            // session 過期已提示過 → 壓掉緊接著冒出來的一串連帶錯誤
+            if (typeof _suppressToastUntil !== 'undefined' && Date.now() < _suppressToastUntil
+                && message !== '登入階段已過期，請重新登入') return;
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('customerId').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('password').focus(); });
+            document.getElementById('password').addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+        });
+
+        window.onload = function() {
+            const savedCode = localStorage.getItem('gCode');
+            if (savedCode) document.getElementById('customerId').value = savedCode;
+        };
+    </script>
+
+<!-- ===== PWA 安裝橫條 + Service Worker 註冊 ===== -->
+<div id="pwaInstallBar" style="display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:linear-gradient(135deg,#1a2b4a,#16213e);border:1px solid rgba(243,156,18,0.4);border-radius:12px;padding:12px 16px;box-shadow:0 8px 24px rgba(0,0,0,0.4);align-items:center;gap:12px;color:#fff;font-size:14px;">
+  <div style="font-size:24px;flex-shrink:0;">📲</div>
+  <div style="flex:1;min-width:0;">
+    <div style="font-weight:700;line-height:1.3;">加到主畫面，下次直接開</div>
+    <div id="pwaInstallTip" style="font-size:11px;color:#aaa;margin-top:2px;line-height:1.3;"></div>
+  </div>
+  <button id="pwaInstallBtn" style="background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;flex-shrink:0;">安裝</button>
+  <button onclick="dismissPwaBar()" style="background:transparent;border:none;color:#888;font-size:20px;cursor:pointer;padding:4px 8px;flex-shrink:0;">×</button>
+</div>
+
+<script>
+(function(){
+  // === 1. 註冊 Service Worker ===
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .catch(function(err){ console.warn('[PWA] SW register failed:', err); });
+    });
+  }
+
+  // === 2. 安裝橫條（30 天內按 × 不再出現，已安裝/已在 standalone 也不出現）===
+  function dismissPwaBar(){
+    document.getElementById('pwaInstallBar').style.display = 'none';
+    try { localStorage.setItem('pwa_install_dismissed_at', Date.now()); } catch(e){}
+  }
+  window.dismissPwaBar = dismissPwaBar;
+
+  // 偵測平台
+  var ua = navigator.userAgent || "";
+  var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  var isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                     window.navigator.standalone === true;  // iOS Safari
+
+  // 30 天內按過 × 不再顯示
+  function shouldShowBar(){
+    try {
+      var ts = parseInt(localStorage.getItem('pwa_install_dismissed_at') || '0');
+      if (ts && (Date.now() - ts) < 30*24*3600*1000) return false;
+    } catch(e){}
+    return true;
+  }
+
+  var deferredPrompt = null;
+  var bar = document.getElementById('pwaInstallBar');
+  var btn = document.getElementById('pwaInstallBtn');
+  var tip = document.getElementById('pwaInstallTip');
+
+  if (isStandalone) {
+    // 已安裝，不顯示
+    return;
+  }
+
+  // Android Chrome / Edge / Samsung：beforeinstallprompt
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!shouldShowBar()) return;
+    tip.textContent = '一鍵安裝為 App，離線可看上次資料';
+    bar.style.display = 'flex';
+  });
+
+  btn.addEventListener('click', async function(){
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      try {
+        await deferredPrompt.userChoice;
+      } catch(e){}
+      deferredPrompt = null;
+      bar.style.display = 'none';
+    } else if (isIOS && isSafari) {
+      // iOS 沒有 prompt，提示手動步驟
+      alert('iOS 安裝步驟：\n\n1. 點 Safari 下方「分享」按鈕（方框含上箭頭）\n2. 往下捲找到「加入主畫面」\n3. 右上角「新增」\n\n之後從主畫面開啟，就會像 App 一樣全螢幕。');
+    }
+  });
+
+  // iOS Safari 沒有 beforeinstallprompt → 自己判斷顯示
+  if (isIOS && isSafari && shouldShowBar()) {
+    tip.innerHTML = '點下方分享 <span style="font-size:14px;">⎙</span> → 加入主畫面';
+    btn.textContent = '看步驟';
+    bar.style.display = 'flex';
+  }
+})();
+</script>
+</body>
+</html>
