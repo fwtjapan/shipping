@@ -4284,7 +4284,7 @@ def admin_last5_diag():
 #    （全站只有這兩處算計費重量）翻成 Python，不是憑公式說明重寫。
 #    改前端規則時這裡要跟著改，否則診斷會失真。
 
-BILLING_MIN_KG = 2.0          # 現行下限（calcBoxes: raw<2 ? 2 ...；calcHandling: hw < 2 ? 2 ...）
+BILLING_MIN_KG = 1.0          # FWT JAPAN：最低 1kg，超過照實際重量（小數點後兩位）計費
 BILLING_RULE_SINCE = "2026-09-01"
 
 
@@ -4337,7 +4337,7 @@ def _calc_box_billed(box, rate, min_kg=BILLING_MIN_KG):
     if weight <= 0:
         billed = 0.0
     else:
-        billed = float(min_kg) if raw < min_kg else math.ceil(raw * 2) / 2
+        billed = float(min_kg) if raw < min_kg else round(raw, 2)
     sub = _js_round(billed * rate)
     return billed, sub
 
@@ -4394,7 +4394,7 @@ def _billing_recalc_row(rd, min_kg=BILLING_MIN_KG):
         if stored_billed <= 0:
             recalc_billed = 0.0
         else:
-            recalc_billed = float(min_kg) if stored_billed < min_kg else math.ceil(stored_billed * 2) / 2
+            recalc_billed = float(min_kg) if stored_billed < min_kg else round(stored_billed, 2)
         shipping_residual = int(stored_shipping - _js_round(stored_billed * rate))
         recalc_shipping = _js_round(recalc_billed * rate) + shipping_residual
 
@@ -4403,7 +4403,7 @@ def _billing_recalc_row(rd, min_kg=BILLING_MIN_KG):
     recalc_total = _js_round(stored_total - stored_shipping - stored_handling + recalc_shipping + recalc_handling)
 
     weight_mismatch = abs(recalc_billed - stored_billed) > 0.005
-    not_half_kg = stored_billed > 0 and not _is_half_kg_multiple(stored_billed)
+    not_half_kg = False  # FWT JAPAN：不做 0.5kg 進位，不檢查
     return {
         "mode": mode,
         "box_count": len(boxes),

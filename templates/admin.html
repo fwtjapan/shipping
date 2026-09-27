@@ -1604,7 +1604,7 @@
             <div class="form-group" style="margin:0;">
                 <label data-i18n="bl.handlefee">理貨費</label>
                 <input type="number" id="bill-handling" class="form-control" min="0" oninput="calcTotal()">
-                <div style="font-size:11px;color:#888;margin-top:2px;" data-i18n="bl.handlehint">每kg 11元，0.5kg尾數+6元</div>
+                <div style="font-size:11px;color:#888;margin-top:2px;" data-i18n="bl.handlehint">FWT JAPAN 不收理貨費</div>
             </div>
         </div>
         <!-- 合箱費 -->
@@ -1649,8 +1649,8 @@
         </div>
         <div style="font-size:12px;color:#888;margin-top:8px;" data-i18n-html="bl.formula_block">
             運費 = 計費重量 × 單價<br>
-            理貨費 = 每kg 11元，0.5kg尾數+6元（理貨重量填 0 = 不收）<br>
-            計費規則：2026/09/01 起最低 2kg，超過後以 0.5kg 進位
+            只算實際重量、不算材積；不收理貨費、合箱費、信件費<br>
+            計費規則：最低 1kg，超過 1kg 照實際重量（小數點）計費
         </div>
         <div class="form-group" style="margin-top:12px;">
             <label data-i18n="bl.tracking">📦 追蹤號碼（多箱請換行）</label>
@@ -1741,14 +1741,14 @@ var I18N = {
     // 出貨帳單 modal 固定
     "bl.title":"📦 出荷請求書","bl.rate":"送料単価 (台湾ドル/kg)","bl.billedwt":"合計課金重量 (kg・各箱合計)",
     "bl.boxes":"📦 箱明細（箱ごとに計算）","bl.addbox":"➕ 箱を追加","bl.shipsub":"送料小計 (各箱合計)",
-    "bl.handlewt":"仕分け重量 (kg)","bl.handlefee":"仕分け料","bl.handlehint":"1kgあたり11元、0.5kg端数+6元",
+    "bl.handlewt":"仕分け重量 (kg)","bl.handlefee":"仕分け料","bl.handlehint":"仕分け料なし",
     "bl.pkgcount":"箱数","bl.consofee":"同梱料","bl.consohint":"3箱まで無料、超過分は1箱+NT$14",
     "bl.lettercount":"手紙の件数","bl.letterhint":"入荷種別により自動入力、変更可",
     "bl.letterfee":"手紙料","bl.letterhint2":"1件 NT$20","bl.extra":"⭐ 付加サービス（任意）",
     "bl.addextra":"➕ 付加サービスを追加","bl.total":"💰 合計 (台湾ドル)",
-    "bl.formula":"送料 = 課金重量 × 単価","bl.formula2":"仕分け料 = 1kgあたり11元、0.5kg端数+6元（仕分け重量0=不要）",
-    "bl.formula3":"課金ルール：2026/09/01より最低2kg、超過後は0.5kg単位で切り上げ",
-    "bl.formula_block":"送料 = 課金重量 × 単価<br>仕分け料 = 1kgあたり11元、0.5kg端数+6元（仕分け重量0=不要）<br>課金ルール：2026/09/01より最低2kg、超過後は0.5kg単位で切り上げ",
+    "bl.formula":"送料 = 課金重量 × 単価","bl.formula2":"仕分け料なし",
+    "bl.formula3":"課金ルール：最低1kg、1kg超は実重量（小数点）で計算",
+    "bl.formula_block":"送料 = 課金重量 × 単価<br>実重量のみで計算（容積重量なし）；仕分け料・同梱料・郵便物料なし<br>課金ルール：最低1kg、1kg超は実重量（小数点）で計算",
     "bl.tracking":"📦 追跡番号（複数箱は改行）","bl.adminnote":"管理者メモ（任意）",
     "btn.cancel2":"キャンセル","btn.confirmship":"✅ 出荷を確定",
     "bl.ph.handlewt":"0 = 不要","bl.ph.adminnote":"任意",
@@ -5067,7 +5067,7 @@ function renderExportsTable() {
             + '<td>' + (i.ship_recipient || '－') + '</td>'
             + '<td style="font-size:12px;max-width:240px;">' + (i.ship_address || '－') + '</td>'
             + '<td style="font-size:12px;">' + (i.ship_phone || '－') + '</td>'
-            + '<td style="font-weight:600;color:#f39c12;">' + (i.billed_weight || 0).toFixed(1) + ' kg</td>'
+            + '<td style="font-weight:600;color:#f39c12;">' + (i.billed_weight || 0).toFixed(2) + ' kg</td>'
             + '<td style="font-weight:600;color:#27ae60;">NT$ ' + Math.round(i.total_fee || 0).toLocaleString() + '</td>'
             + '<td style="font-size:11px;color:#999;">' + (i.payment_at || '').slice(5, 16) + '</td>'
             + '<td style="font-family:ui-monospace,monospace;font-size:12px;">' + (i.payment_last5 || '') + '</td>'
@@ -5256,7 +5256,7 @@ async function toggleMonthDetail(row, month) {
                 + '<td style="padding:6px 8px;"><span class="g-code">' + d.g_code + '</span></td>'
                 + '<td style="padding:6px 8px;">' + (d.customer_name||'-') + '</td>'
                 + '<td style="padding:6px 8px;font-size:11px;color:#888;max-width:180px;overflow:hidden;text-overflow:ellipsis;">' + addr + '</td>'
-                + '<td style="padding:6px 8px;text-align:right;color:#f39c12;font-weight:600;">' + d.billed_weight.toFixed(1) + '</td>'
+                + '<td style="padding:6px 8px;text-align:right;color:#f39c12;font-weight:600;">' + d.billed_weight.toFixed(2) + '</td>'
                 + '<td style="padding:6px 8px;text-align:right;">$' + Math.round(d.shipping_fee).toLocaleString() + '</td>'
                 + '<td style="padding:6px 8px;text-align:right;">$' + Math.round(d.handling_fee).toLocaleString() + '</td>'
                 + '<td style="padding:6px 8px;text-align:right;">$' + Math.round(d.consolidation_fee||0).toLocaleString() + '</td>'
@@ -5719,7 +5719,7 @@ function _billMoneySnapshot() {
 // 鎖定中：把存檔金額寫回畫面（calcBoxes / calcTotal 等重算一律導到這裡）
 function _billRestoreLockedAmounts() {
     if (!_billLocked || !_billOrig) return;
-    document.getElementById('bill-billed-weight').value = _billOrig.billed_weight ? Number(_billOrig.billed_weight).toFixed(1) : '';
+    document.getElementById('bill-billed-weight').value = _billOrig.billed_weight ? Number(_billOrig.billed_weight).toFixed(2) : '';
     document.getElementById('bill-shipping').value = _billOrig.shipping;
     document.getElementById('bill-handling').value = _billOrig.handling;
     document.getElementById('bill-handling-weight').value = '';
@@ -5946,7 +5946,7 @@ function openBillingEditModal(reqId) {
 
     // 帶入既有數值
     var bw = parseFloat(r.billed_weight) || 0;
-    document.getElementById('bill-billed-weight').value = bw ? bw.toFixed(1) : '';
+    document.getElementById('bill-billed-weight').value = bw ? bw.toFixed(2) : '';
     document.getElementById('bill-rate').value = parseInt(r.rate_per_kg) || 180;
     // 編輯既有帳單：只顯示階梯提示，絕不覆蓋已存檔的費率
     // （這張單當初用什麼費率出的就是什麼，改階梯設定不該回頭動它）
@@ -5961,7 +5961,7 @@ function openBillingEditModal(reqId) {
     document.getElementById('bill-letter-count').value = Math.round(lf / 20);
     document.getElementById('bill-total').value = Math.round(r.total_fee || 0);
 
-    // 記下原始值：下面的 calcBoxes() 會用「現行」計費規則重算（2026/09/01 起最低 2kg）
+    // 記下原始值：下面的 calcBoxes() 會用「現行」計費規則重算（最低 1kg，超過照實際重量）
     _billOrig = {
         billed_weight: bw,
         shipping: Math.round(r.shipping_fee || 0),
@@ -6233,26 +6233,27 @@ function calcBoxes() {
             hint = '材積 '+vol.toFixed(2)+'kg（不計費，僅供參考）';
             if (vsum>200){ hint+='｜⚠️超大貨物(和'+vsum+'>200)請聯繫客服'; hintColor='#e67e22'; }
         }
-        var billed = weight<=0 ? 0 : (raw<2 ? 2 : Math.ceil(raw*2)/2);
+        // FWT JAPAN：最低 1kg；超過 1kg 照實際重量（小數點後兩位）計費
+        var billed = weight<=0 ? 0 : (raw<1 ? 1 : Math.round(raw*100)/100);
         var sub = Math.round(billed*rate);
         totalBilled += billed; totalShipping += sub;
         if (b.tracking_num) trackings.push(b.tracking_num);
         var row = rows[i];
         if (row) {
-            row.querySelector('.bx-billed').textContent = billed>0 ? (T('計費 ')+billed.toFixed(1)+'kg') : '';
+            row.querySelector('.bx-billed').textContent = billed>0 ? (T('計費 ')+billed.toFixed(2)+'kg') : '';
             row.querySelector('.bx-sub').textContent = billed>0 ? (T('運費 ')+'NT$'+sub) : '';
             row.querySelector('.bx-hint').innerHTML = hint;
             row.querySelector('.bx-hint').style.color = hintColor;
         }
     });
-    document.getElementById('bill-billed-weight').value = totalBilled>0 ? totalBilled.toFixed(1) : '';
+    document.getElementById('bill-billed-weight').value = totalBilled>0 ? totalBilled.toFixed(2) : '';
     document.getElementById('bill-shipping').value = totalShipping || '';
     // 箱數 → 合箱費依箱數；追蹤號自動同步（供出檔案/台灣貨況）
     var pc = document.getElementById('bill-pkg-count'); if (pc) pc.value = _billBoxes.length;
     var tk = document.getElementById('bill-tracking'); if (tk) tk.value = trackings.join('\n');
     // 理貨重量預設 = 總計費重量
     var hw = document.getElementById('bill-handling-weight');
-    if (hw) hw.value = totalBilled>0 ? totalBilled.toFixed(1) : '';
+    if (hw) hw.value = totalBilled>0 ? totalBilled.toFixed(2) : '';
     calcHandling();
 }
 function vlong_over(l,w,h){ return Math.max(parseFloat(l)||0, parseFloat(w)||0, parseFloat(h)||0) > 150; }
@@ -6273,7 +6274,7 @@ function calcLetter() {
     if (_billLocked) { _billRestoreLockedAmounts(); return; }
     var cnt = parseInt(document.getElementById('bill-letter-count').value) || 0;
     if (cnt < 0) cnt = 0;
-    document.getElementById('bill-letter').value = cnt * 20;
+    document.getElementById('bill-letter').value = 0;  // FWT JAPAN：不收信件費
     calcTotal();
 }
 
@@ -6330,7 +6331,7 @@ async function submitBilling() {
         if (_diffs.length) {
             if (!confirm('⚠️ 這張帳單被重算了，金額跟原本不同：\n\n'
                        + _diffs.join('\n')
-                       + '\n\n（計費規則 2026/09/01 起最低 2kg，開啟舊帳單會自動套用新規則重算）\n\n'
+                       + '\n\n（開啟舊帳單會自動套用現行計費規則重算）\n\n'
                        + '確定要用上面的新金額覆蓋原帳單嗎？')) return;
         }
     }

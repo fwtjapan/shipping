@@ -805,7 +805,7 @@
         loadPaidServicesInfo();
 
         // 運費試算（客戶端）：只算實際重量、不算材積；費率取自頁面 data-rate
-        function _volRound(raw){ return Math.max(2.0, Math.ceil((raw/0.5) - 1e-9) * 0.5); }
+        function _volRound(raw){ return raw < 1 ? 1 : Math.round(raw * 100) / 100; }  // 最低 1kg，超過照實際重量
         function calcVolumetric(el){
             var box = el.closest('.vol-calc'); if (!box) return;
             var wt = parseFloat(box.querySelector('.vol-wt').value) || 0;
@@ -818,7 +818,7 @@
             var rate = parseFloat(document.body.dataset.rate) || 0;
             var billed = _volRound(wt);
             out.style.color = '#ddd';
-            out.innerHTML = '計費重量：<strong style="color:#f39c12;font-size:16px;">' + billed + ' kg</strong>（' + wt + ' kg 進位）<br>'
+            out.innerHTML = '計費重量：<strong style="color:#f39c12;font-size:16px;">' + billed + ' kg</strong>' + (wt < 1 ? '（未滿 1kg 以 1kg 計）' : '') + '<br>'
                 + '👉 運費約 <strong style="color:#f39c12;font-size:16px;">NT$' + Math.round(billed * rate).toLocaleString() + '</strong>';
         }
 
